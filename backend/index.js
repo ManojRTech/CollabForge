@@ -2,10 +2,12 @@
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import authMiddleware from "./middleware/authMiddleware.js";
+import dotenv from "dotenv";
+
+dotenv.config(); // load .env
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware (helps parse JSON requests later)
 app.use(express.json());

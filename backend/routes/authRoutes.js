@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
 
 const router = express.Router();
-const JWT_SECRET = "your_jwt_secret_key";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Register
 router.post("/register", async (req, res) => {
@@ -33,7 +33,7 @@ router.post("/register", async (req, res) => {
     );
 
     // Create token
-    const token = jwt.sign({ id: newUser.rows[0].id }, JWT_SECRET, {
+    const token = jwt.sign({ id: newUser.rows[0].id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
@@ -70,7 +70,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Create token
-    const token = jwt.sign({ id: user.rows[0].id }, JWT_SECRET, {
+    const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 

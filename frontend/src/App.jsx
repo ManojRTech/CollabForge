@@ -5,6 +5,11 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./pages/Navbar";
 
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  return token ? children : <Navigate to="/auth" />;
+};
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
 
@@ -28,7 +33,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<Auth setToken={setToken} />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       </Routes>
     </Router>
   );

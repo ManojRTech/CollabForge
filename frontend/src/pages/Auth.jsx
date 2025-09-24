@@ -14,9 +14,7 @@ const Auth = (props) => { // <-- receive props
       const res = await axios.post("/api/auth/register", { username, email, password });
       localStorage.setItem("token", res.data.token);
       props.setToken(res.data.token); // inform parent
-      setMessage(`Registered successfully! Welcome ${res.data.user.username}`);
-      setUsername(""); setEmail(""); setPassword("");
-      navigate("/dashboard");
+      navigate("/dashboard", { state: { flashMessage: `Registration successful! Welcome, ${res.data.user.username}` } });
     } catch (err) {
       console.error(err.response || err);
       setMessage(err.response?.data?.message || err.message);
@@ -28,9 +26,7 @@ const Auth = (props) => { // <-- receive props
       const res = await axios.post("/api/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       props.setToken(res.data.token); // inform parent
-      setMessage(`Login successful! Welcome ${res.data.user.username}`);
-      setEmail(""); setPassword("");
-      navigate("/dashboard");
+      navigate("/dashboard", { state: { flashMessage: `Login successful! Welcome, ${res.data.user.username}` } });
     } catch (err) {
       console.error(err.response || err);
       setMessage(err.response?.data?.message || err.message);

@@ -1,11 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 
 const Dashboard = () => {
+
+  const location = useLocation();
+  const flashMessage = location.state?.flashMessage;
+  // Optionally show it in a temporary alert
+  const [message, setMessage] = useState(flashMessage || "");
+  
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (flashMessage) {
+      const timer = setTimeout(() => setMessage(""), 5000); // hide after 3s
+      return () => clearTimeout(timer);
+    }
+  }, [flashMessage]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -40,6 +54,13 @@ const Dashboard = () => {
 
   return (
     <div className="p-6 text-center">
+
+      {message && (
+        <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
+          {message}
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
       {user && (
         <>

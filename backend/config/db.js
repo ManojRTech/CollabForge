@@ -1,14 +1,18 @@
 // backend/config/db.js
 import pkg from 'pg';
+import dotenv from "dotenv";
+
+dotenv.config(); 
+
 const { Pool } = pkg;
 
 // Create a new pool instance
 const pool = new Pool({
-  user: 'postgres',         // PostgreSQL username
-  host: 'localhost',            // server address
-  database: 'collabforge_db',    // database name
-  password: 'ManojDB', // PostgreSQL password
-  port: 5433,                   // default PostgreSQL port
+user: process.env.DB_USER,
+host: process.env.DB_HOST,
+database: process.env.DB_NAME,
+password: process.env.DB_PASSWORD,
+port: process.env.DB_PORT,            
 });
 
 // Test the connection
