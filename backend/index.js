@@ -1,6 +1,8 @@
 // index.js
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import authMiddleware from "./middleware/authMiddleware.js";
 
 const app = express();
 const PORT = 5000;
@@ -15,6 +17,8 @@ app.get("/api/test", (req, res) => {
 
 // Auth routes
 app.use("/api/auth", authRoutes);
+
+app.use("/api/user", userRoutes);
 
 // Start the server
 app.listen(PORT, () => {

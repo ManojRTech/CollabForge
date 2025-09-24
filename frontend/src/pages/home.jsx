@@ -5,9 +5,9 @@ const Home = () => {
 
   const callBackend = async () => {
     try {
-      const res = await fetch("/api/test");  // calls backend
-      const data = await res.json();         // assuming backend sends JSON
-      setResponse(JSON.stringify(data, null, 2)); // pretty-print response
+      const res = await fetch("/api/test"); // backend test endpoint
+      const data = await res.json();
+      setResponse(JSON.stringify(data, null, 2));
     } catch (err) {
       setResponse("Error: " + err.message);
     }
@@ -16,8 +16,8 @@ const Home = () => {
   return (
     <div className="p-6 flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">Home Page</h1>
-      <button 
-        onClick={callBackend} 
+      <button
+        onClick={callBackend}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
         Call Backend
