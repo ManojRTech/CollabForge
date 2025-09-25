@@ -3,6 +3,7 @@ import express from "express";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import dotenv from "dotenv";
+import taskRoutes from "./routes/taskRoutes.js";
 
 dotenv.config(); // load .env
 
@@ -21,6 +22,8 @@ app.get("/api/test", (req, res) => {
 app.use("/api/auth", authRoutes);
 
 app.use("/api/user", userRoutes);
+
+app.use("/api/tasks", taskRoutes);
 
 // Start the server
 app.listen(PORT, () => {
