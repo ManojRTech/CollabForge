@@ -22,6 +22,11 @@ const Dashboard = () => {
   // state for editing
   const [editingTaskId, setEditingTaskId] = useState(null); // Track which task is being edited
 
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const [sortByDeadline, setSortByDeadline] = useState("asc");
+
   const navigate = useNavigate();
 
   // Flash message timeout
@@ -150,31 +155,98 @@ const Dashboard = () => {
 
   // function to populate form for editing
   const handleEditTask = (task) => {
-    setNewTask({
-      title: task.title,
-      description: task.description,
-      deadline: task.deadline ? task.deadline.split("T")[0] : "",
-      category: task.category,
-      status: task.status,
+  setNewTask({
+    id: task.id,                   // optional but safer
+    title: task.title || "",
+    description: task.description || "",
+    deadline: task.deadline ? task.deadline.split("T")[0] : "",
+    category: task.category || "general",
+    status: task.status || "open",
+  });
+  setEditingTaskId(task.id);
+};
+
+const handleUpdateTask = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const { id, title, description, category, deadline, status } = newTask;
+
+    const res = await axios.put(`/api/tasks/${id}`, 
+      { title, description, category, deadline, status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // Update task in state
+    setTasks(tasks.map(t => (t.id === id ? res.data.task : t)));
+
+    // Reset form
+    setNewTask({ title: "", description: "", deadline: "", category: "general", status: "open" });
+    setEditingTaskId(null);
+    setMessage("Task updated successfully!");
+  } catch (err) {
+    console.error(err);
+    setMessage(err.response?.data?.message || "Error updating task");
+  }
+};
+
+
+
+// Accept task button
+const handleAcceptTask = async (id) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.post(`/api/tasks/${id}/accept`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    setEditingTaskId(task.id);
-  };
 
-  const handleUpdateTask = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.put(`/api/tasks/${editingTaskId}`, newTask, {
+    // Replace task in list with updated task
+    setTasks(tasks.map(t => t.id === id ? res.data.task : t));
+    setMessage("Task accepted!");
+  } catch (err) {
+    setMessage(err.response?.data?.message || "Error accepting task");
+  }
+};
+
+
+// Handle status change separately (updated for partial backend update)
+const handleStatusChange = async (id, newStatus) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.patch(
+      `/api/tasks/${id}/status`,
+      { status: newStatus }, // only sending the updated field
+      {
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }
+     );
 
-      setTasks(tasks.map((t) => (t.id === editingTaskId ? res.data.task : t)));
-      setNewTask({ title: "", description: "", deadline: "", category: "general", status: "open" });
-      setEditingTaskId(null);
-      setMessage("Task updated successfully!");
-    } catch (err) {
-      setMessage("Error updating task");
-    }
-  };
+    // update local state immediately
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, status: res.data.task.status } : task
+       )
+     );
+   } catch (err) {
+     console.error("Error updating status", err);
+     setMessage("Error updating status");
+     setTimeout(() => setMessage(""), 3000);
+   }
+};
+
+  const filteredTasks = tasks.filter(task => {
+    return (
+      (!filterCategory || task.category === filterCategory) &&
+      (!filterStatus || task.status === filterStatus)
+    );
+  });
+
+  const displayedTasks = [...filteredTasks].sort((a, b) => {
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return sortByDeadline === "asc"
+      ? new Date(a.deadline) - new Date(b.deadline)
+      : new Date(b.deadline) - new Date(a.deadline);
+  });
 
   if (loading) return <p className="p-6 text-center">Loading...</p>;
 
@@ -283,6 +355,16 @@ const Dashboard = () => {
               <option value="urgent">Urgent</option>
             </select>
 
+            <select
+              value={newTask.status}
+              onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}
+              className="p-2 border rounded w-full mb-2"
+            >
+              <option value="open">Open</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+
             <button
               onClick={editingTaskId ? handleUpdateTask : handleAddTask}
               className={`px-4 py-2 rounded text-white ${editingTaskId ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"}`}
@@ -290,15 +372,63 @@ const Dashboard = () => {
               {editingTaskId ? "Update Task" : "Add Task"}
             </button>
 
+            <div className="flex gap-2 mb-2 justify-center">
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="p-2 border rounded"
+              >
+                <option value="">All Categories</option>
+                <option value="general">General</option>
+                <option value="work">Work</option>
+                <option value="personal">Personal</option>
+                <option value="urgent">Urgent</option>
+              </select>
+
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="p-2 border rounded"
+              >
+                <option value="">All Statuses</option>
+                <option value="open">Open</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+
+              <button
+                onClick={() => setSortByDeadline(sortByDeadline === "asc" ? "desc" : "asc")}
+                className="px-2 py-1 bg-gray-200 rounded"
+              >
+                Sort by Deadline {sortByDeadline === "asc" ? "↑" : "↓"}
+              </button>
+
+            </div>
+
             {/* Task List */}
-            <ul className="mt-4 text-left">
-              {tasks.map((task) => (
+            {/* My Tasks */}
+            <h3 className="font-semibold mb-2">My Tasks</h3>
+            {displayedTasks
+              .filter(task => task.created_by === user.id)
+              .map(task => (
                 <li key={task.id} className="p-2 border-b flex justify-between items-center">
                   <div>
                     <strong>{task.title}</strong> <br />
                     <small>{task.description}</small> <br />
                     <small>Deadline: {task.deadline || "N/A"}</small> <br />
-                    <small>Category: {task.category || "General"}</small>
+                    <small>Category: {task.category || "General"}</small> <br />
+                    <small>Status: {task.status || "open"}</small><br />
+
+                    {/* Status dropdown only for my tasks */}
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                      className="mt-1 p-1 border rounded"
+                    >
+                      <option value="open">Open</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -315,8 +445,37 @@ const Dashboard = () => {
                     </button>
                   </div>
                 </li>
-              ))}
-            </ul>
+              ))
+            }
+
+            {/* Available Tasks */}
+            <h3 className="font-semibold mt-6 mb-2">Available Tasks</h3>
+            {displayedTasks
+              .filter(task => task.created_by !== user.id)
+              .map(task => (
+                <li key={task.id} className="p-2 border-b flex justify-between items-center">
+                  <div>
+                    <strong>{task.title}</strong> <br />
+                    <small>{task.description}</small> <br />
+                    <small>Deadline: {task.deadline || "N/A"}</small> <br />
+                    <small>Category: {task.category || "General"}</small> <br />
+                    <small>Status: {task.status || "open"}</small><br />
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => handleAcceptTask(task.id)}
+                      className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Accept Task
+                    </button>
+
+                  </div>
+                </li>
+            ))}
+
+
+
+
           </div>
 
           {/* Logout */}

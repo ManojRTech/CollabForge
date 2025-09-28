@@ -22,15 +22,34 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
-// Get all tasks (only user’s own for now)
+// Accept a task
+router.post("/:id/accept", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE tasks
+       SET status = 'accepted', assigned_to = $1
+       WHERE id = $2 AND created_by <> $1
+       RETURNING id, title, description, category, deadline, status, created_by, assigned_to`,
+      [req.user.id, req.params.id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(400).json({ message: "Cannot accept this task" });
+
+    res.json({ task: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// Get all tasks
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, t.created_at
+      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, t.created_at, t.created_by
        FROM tasks t
-       WHERE t.created_by = $1
-       ORDER BY t.created_at DESC`,
-      [req.user.id]
+       ORDER BY t.created_at DESC`
     );
 
     res.json({ tasks: result.rows });
@@ -58,7 +77,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// Update a task
+// Update a task (all fields)
 router.put("/:id", authMiddleware, async (req, res) => {
   const { title, description, category, deadline, status } = req.body;
 
@@ -67,8 +86,31 @@ router.put("/:id", authMiddleware, async (req, res) => {
       `UPDATE tasks
        SET title = $1, description = $2, category = $3, deadline = $4, status = $5
        WHERE id = $6 AND created_by = $7
-       RETURNING id, title, description, category, deadline, status, created_at`,
+       RETURNING id, title, description, category, deadline, status, created_by, created_at`,
       [title, description, category, deadline, status, req.params.id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found or not yours" });
+    }
+
+    res.json({ task: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ✅ Update only task status
+router.patch("/:id/status", authMiddleware, async (req, res) => {
+  const { status } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE tasks
+       SET status = $1
+       WHERE id = $2 AND created_by = $3
+       RETURNING id, title, description, category, deadline, status, created_at`,
+      [status, req.params.id, req.user.id]
     );
 
     if (result.rows.length === 0) {
