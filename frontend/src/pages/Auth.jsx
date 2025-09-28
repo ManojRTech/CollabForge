@@ -16,9 +16,12 @@ const Auth = (props) => { // <-- receive props
       props.setToken(res.data.token); // inform parent
       navigate("/dashboard", { state: { flashMessage: `Registration successful! Welcome, ${res.data.user.username}` } });
     } catch (err) {
-      console.error(err.response || err);
-      setMessage(err.response?.data?.message || err.message);
-    }
+      console.error("Registration error:", err);
+      console.error("Error response:", err.response);
+      setMessage(err.response?.data?.message || err.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
+    };
   };
 
   const handleLogin = async () => {
@@ -27,10 +30,13 @@ const Auth = (props) => { // <-- receive props
       localStorage.setItem("token", res.data.token);
       props.setToken(res.data.token); // inform parent
       navigate("/dashboard", { state: { flashMessage: `Login successful! Welcome, ${res.data.user.username}` } });
-    } catch (err) {
-      console.error(err.response || err);
-      setMessage(err.response?.data?.message || err.message);
-    }
+    }catch (err) {
+      console.error("Registration error:", err);
+      console.error("Error response:", err.response);
+      setMessage(err.response?.data?.message || err.message || "Login failed");
+    }finally {
+      setIsLoading(false);
+    };
   };
 
   return (

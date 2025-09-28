@@ -1,25 +1,17 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+// frontend/src/App.jsx
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useState } from "react";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./pages/Navbar";
 
-const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem("token");
+const PrivateRoute = ({ children, token }) => { // ⬅️ Take token as a prop
   return token ? children : <Navigate to="/auth" />;
 };
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
-
-  // Keep token in sync
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setToken(localStorage.getItem("token"));
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -29,11 +21,14 @@ function App() {
   return (
     <Router>
       <Navbar token={token} onLogout={handleLogout} />
-
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<Auth setToken={setToken} />} />
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/dashboard" element={
+          <PrivateRoute token={token}> 
+            <Dashboard />
+          </PrivateRoute>
+        } />
       </Routes>
     </Router>
   );

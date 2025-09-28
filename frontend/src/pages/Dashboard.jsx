@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -10,9 +9,16 @@ const Dashboard = () => {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Password fields and visibility state
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  // Tasks
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState({ title: "", description: "", deadline: "", category: "general", status: "open" });
+
   const navigate = useNavigate();
 
   // Flash message timeout
@@ -23,27 +29,41 @@ const Dashboard = () => {
     }
   }, [flashMessage]);
 
-  // Fetch logged-in user
+  // Fetch user + tasks
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("No token found");
 
-        const res = await axios.get("/api/user/me", {
+        const userRes = await axios.get("/api/user/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        setUser(userRes.data.user);
 
-        setUser(res.data.user);
+        const taskRes = await axios.get("/api/tasks", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTasks(taskRes.data.tasks);
       } catch (err) {
-        localStorage.removeItem("token");
-        navigate("/auth");
+        console.error("Dashboard fetch error:", err);
+        console.error("Error response:", err.response);
+      
+        // Only redirect if it's an authentication error
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/auth");
+        } else {
+          // For other errors, show error message but stay on dashboard
+          setMessage("Failed to load data: " + (err.response?.data?.message || err.message));
+          setLoading(false);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
+    fetchData();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -51,6 +71,17 @@ const Dashboard = () => {
     navigate("/auth");
   };
 
+  // Toggle password fields visibility
+  const togglePasswordFields = () => {
+    setShowPasswordFields(!showPasswordFields);
+    // Reset password fields when hiding
+    if (showPasswordFields) {
+      setCurrentPassword("");
+      setNewPassword("");
+    }
+  };
+
+  // Save profile updates
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -60,7 +91,7 @@ const Dashboard = () => {
         interests: user.interests,
       };
 
-      if (showPasswordFields && currentPassword && newPassword) {
+      if (currentPassword && newPassword) {
         payload.currentPassword = currentPassword;
         payload.newPassword = newPassword;
       }
@@ -71,14 +102,46 @@ const Dashboard = () => {
 
       setUser(res.data.user);
       setMessage("Profile updated successfully!");
+      
+      // Reset and hide password fields after successful save
       setCurrentPassword("");
       setNewPassword("");
       setShowPasswordFields(false);
+      
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      console.error(err.response || err);
       setMessage(err.response?.data?.message || "Error updating profile");
       setTimeout(() => setMessage(""), 3000);
+    }
+  };
+
+  // Add a task
+  const handleAddTask = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post("/api/tasks", newTask, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setTasks([res.data.task, ...tasks]); // prepend new task
+      setNewTask({ title: "", description: "", deadline: "", category: "general" });
+      setMessage("Task added successfully!");
+    } catch (err) {
+      setMessage("Error adding task");
+    }
+  };
+
+  // Delete a task
+  const handleDeleteTask = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`/api/tasks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTasks(tasks.filter((t) => t.id !== id));
+      setMessage("Task deleted successfully!");
+    } catch (err) {
+      setMessage("Error deleting task");
     }
   };
 
@@ -96,66 +159,131 @@ const Dashboard = () => {
         <>
           <p>Welcome, <strong>{user.username}</strong> ({user.email})</p>
 
-          <div className="mt-4 flex flex-col items-center gap-2 w-80 mx-auto">
+          {/* Profile Section */}
+          <div className="mt-6 border p-4 rounded shadow w-96 mx-auto">
+            <h2 className="font-semibold mb-2">Profile</h2>
             <input
               type="text"
               placeholder="Username"
               value={user.username || ""}
               onChange={(e) => setUser({ ...user, username: e.target.value })}
-              className="p-2 border rounded w-full"
+              className="p-2 border rounded w-full mb-2"
             />
             <textarea
               placeholder="Bio"
               value={user.bio || ""}
               onChange={(e) => setUser({ ...user, bio: e.target.value })}
-              className="p-2 border rounded w-full"
+              className="p-2 border rounded w-full mb-2"
             />
             <input
               type="text"
-              placeholder="Interests (comma separated)"
+              placeholder="Interests"
               value={user.interests || ""}
               onChange={(e) => setUser({ ...user, interests: e.target.value })}
-              className="p-2 border rounded w-full"
+              className="p-2 border rounded w-full mb-2"
             />
 
-            {/* Toggle password fields */}
+            {/* Change Password Button */}
             <button
-              onClick={() => setShowPasswordFields(!showPasswordFields)}
-              className="mt-2 text-blue-500 underline"
+              onClick={togglePasswordFields}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mb-2"
             >
               {showPasswordFields ? "Cancel Password Change" : "Change Password"}
             </button>
 
+            {/* Password Fields - Conditionally Rendered */}
             {showPasswordFields && (
-              <>
+              <div className="mt-2 p-2 border rounded bg-gray-50">
                 <input
                   type="password"
                   placeholder="Current Password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="p-2 border rounded w-full mt-2"
+                  className="p-2 border rounded w-full mb-2"
                 />
                 <input
                   type="password"
                   placeholder="New Password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="p-2 border rounded w-full"
+                  className="p-2 border rounded w-full mb-2"
                 />
-              </>
+              </div>
             )}
 
             <button
               onClick={handleSaveProfile}
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mt-2"
             >
-              Save
+              Save Profile
             </button>
           </div>
 
+          {/* Task Section */}
+          <div className="mt-8 border p-4 rounded shadow w-96 mx-auto">
+            <h2 className="font-semibold mb-2">Tasks</h2>
+            <input
+              type="text"
+              placeholder="Title"
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              className="p-2 border rounded w-full mb-2"
+            />
+            <textarea
+              placeholder="Description"
+              value={newTask.description}
+              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              className="p-2 border rounded w-full mb-2"
+            />
+            <input
+              type="date"
+              value={newTask.deadline}
+              onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
+              className="p-2 border rounded w-full mb-2"
+            />
+            <select
+              value={newTask.category}
+              onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+              className="p-2 border rounded w-full mb-2"
+            >
+              <option value="general">General</option>
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+              <option value="urgent">Urgent</option>
+            </select>
+
+            <button
+              onClick={handleAddTask}
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Add Task
+            </button>
+
+            {/* Task List */}
+            <ul className="mt-4 text-left">
+              {tasks.map((task) => (
+                <li key={task.id} className="p-2 border-b flex justify-between items-center">
+                  <div>
+                    <strong>{task.title}</strong> <br />
+                    <small>{task.description}</small> <br />
+                    <small>Deadline: {task.deadline || "N/A"}</small> <br />
+                    <small>Category: {task.category || "General"}</small>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className="mt-6 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
             Logout
           </button>

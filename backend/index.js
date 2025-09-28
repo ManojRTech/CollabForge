@@ -1,11 +1,9 @@
-// index.js
+import dotenv from "dotenv";
+dotenv.config(); // load .env
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import dotenv from "dotenv";
 import taskRoutes from "./routes/taskRoutes.js";
-
-dotenv.config(); // load .env
 
 const app = express();
 const PORT = process.env.PORT || 5000;
