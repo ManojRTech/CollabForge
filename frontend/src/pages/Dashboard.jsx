@@ -19,6 +19,9 @@ const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState({ title: "", description: "", deadline: "", category: "general", status: "open" });
 
+  // state for editing
+  const [editingTaskId, setEditingTaskId] = useState(null); // Track which task is being edited
+
   const navigate = useNavigate();
 
   // Flash message timeout
@@ -145,6 +148,34 @@ const Dashboard = () => {
     }
   };
 
+  // function to populate form for editing
+  const handleEditTask = (task) => {
+    setNewTask({
+      title: task.title,
+      description: task.description,
+      deadline: task.deadline ? task.deadline.split("T")[0] : "",
+      category: task.category,
+      status: task.status,
+    });
+    setEditingTaskId(task.id);
+  };
+
+  const handleUpdateTask = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(`/api/tasks/${editingTaskId}`, newTask, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setTasks(tasks.map((t) => (t.id === editingTaskId ? res.data.task : t)));
+      setNewTask({ title: "", description: "", deadline: "", category: "general", status: "open" });
+      setEditingTaskId(null);
+      setMessage("Task updated successfully!");
+    } catch (err) {
+      setMessage("Error updating task");
+    }
+  };
+
   if (loading) return <p className="p-6 text-center">Loading...</p>;
 
   return (
@@ -253,10 +284,10 @@ const Dashboard = () => {
             </select>
 
             <button
-              onClick={handleAddTask}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              onClick={editingTaskId ? handleUpdateTask : handleAddTask}
+              className={`px-4 py-2 rounded text-white ${editingTaskId ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"}`}
             >
-              Add Task
+              {editingTaskId ? "Update Task" : "Add Task"}
             </button>
 
             {/* Task List */}
@@ -269,12 +300,20 @@ const Dashboard = () => {
                     <small>Deadline: {task.deadline || "N/A"}</small> <br />
                     <small>Category: {task.category || "General"}</small>
                   </div>
-                  <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditTask(task)}
+                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
