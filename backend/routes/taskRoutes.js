@@ -43,69 +43,119 @@ router.post("/:id/accept", authMiddleware, async (req, res) => {
 });
 
 // POST /tasks/:id/request
-router.post("/tasks/:id/request", async (req, res) => {
+router.post("/:id/request", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
-  const userId = req.user.id; // assume auth middleware sets req.user
+  const userId = req.user.id;
 
-  const task = await Task.findById(taskId);
-  if (!task) return res.status(404).json({ message: "Task not found" });
+  try {
+    // Check if task exists
+    const taskResult = await pool.query(
+      "SELECT * FROM tasks WHERE id = $1",
+      [taskId]
+    );
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
 
-  // Check if already requested
-  if (task.pending_requests.some(r => r.user.toString() === userId)) {
-    return res.status(400).json({ message: "Already requested" });
+    // Check if already requested
+    const existingRequest = await pool.query(
+      "SELECT * FROM requests WHERE task_id = $1 AND user_id = $2",
+      [taskId, userId]
+    );
+    if (existingRequest.rows.length > 0) {
+      return res.status(400).json({ message: "Already requested" });
+    }
+
+    // Insert request
+    await pool.query(
+      "INSERT INTO requests (task_id, user_id, status) VALUES ($1, $2, 'pending')",
+      [taskId, userId]
+    );
+
+    res.json({ message: "Request sent to task creator" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  task.pending_requests.push({ user: userId });
-  await task.save();
-
-  // TODO: Send notification to task.creator
-  res.json({ message: "Request sent to task creator" });
 });
 
+
 // POST /tasks/:id/approve
-router.post("/tasks/:id/approve", async (req, res) => {
+router.post("/:id/approve", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
-  const { userId } = req.body; // user to approve
-  const task = await Task.findById(taskId);
-  if (!task) return res.status(404).json({ message: "Task not found" });
+  const { userId } = req.body; // requester ID
 
-  // Only creator can approve
-  if (task.created_by.toString() !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized" });
+  try {
+    // Check if task exists & requester is the creator
+    const taskResult = await pool.query(
+      "SELECT * FROM tasks WHERE id = $1",
+      [taskId]
+    );
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    if (taskResult.rows[0].created_by !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Check if the user requested this task
+    const requestResult = await pool.query(
+      "SELECT * FROM requests WHERE task_id = $1 AND user_id = $2 AND status = 'pending'",
+      [taskId, userId]
+    );
+    if (requestResult.rows.length === 0) {
+      return res.status(400).json({ message: "User did not request this task" });
+    }
+
+    // Approve request
+    await pool.query(
+      "UPDATE requests SET status = 'approved' WHERE task_id = $1 AND user_id = $2",
+      [taskId, userId]
+    );
+
+    // Assign task to this user
+    await pool.query(
+      "UPDATE tasks SET assigned_to = $1, status = 'in-progress' WHERE id = $2",
+      [userId, taskId]
+    );
+
+    res.json({ message: "User approved and task assigned" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  // Check if user requested
-  const requestIndex = task.pending_requests.findIndex(r => r.user.toString() === userId);
-  if (requestIndex === -1) return res.status(400).json({ message: "User did not request this task" });
-
-  // Approve
-  task.assigned_to = userId;
-  task.pending_requests = []; // clear all pending requests
-  await task.save();
-
-  // TODO: Send notification to approved user
-  res.json({ message: "User approved", task });
 });
 
 // POST /tasks/:id/reject
-router.post("/tasks/:id/reject", async (req, res) => {
+router.post("/:id/reject", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
-  const { userId } = req.body; // user to reject
-  const task = await Task.findById(taskId);
-  if (!task) return res.status(404).json({ message: "Task not found" });
+  const { userId } = req.body;
 
-  if (task.created_by.toString() !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized" });
+  try {
+    // Check if task exists & requester is the creator
+    const taskResult = await pool.query(
+      "SELECT * FROM tasks WHERE id = $1",
+      [taskId]
+    );
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    if (taskResult.rows[0].created_by !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Reject request
+    await pool.query(
+      "UPDATE requests SET status = 'rejected' WHERE task_id = $1 AND user_id = $2",
+      [taskId, userId]
+    );
+
+    res.json({ message: "User rejected" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  // Remove from pending_requests
-  task.pending_requests = task.pending_requests.filter(r => r.user.toString() !== userId);
-  await task.save();
-
-  // TODO: Send notification to rejected user
-  res.json({ message: "User rejected" });
 });
-
 
 
 // Get all tasks
@@ -120,6 +170,47 @@ router.get("/", authMiddleware, async (req, res) => {
     res.json({ tasks: result.rows });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Get all requests for tasks created by logged-in user
+router.get("/my-requests", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT r.id AS request_id, r.status, r.user_id, u.username,
+              t.id AS task_id, t.title, t.status AS task_status, r.created_at
+       FROM requests r
+       JOIN tasks t ON r.task_id = t.id
+       JOIN users u ON r.user_id = u.id
+       WHERE t.created_by = $1
+       ORDER BY r.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ requests: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get requests made by the current user
+router.get("/user/requests", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT r.id AS request_id, r.status, r.task_id, t.title AS task_title,
+              t.created_by AS task_creator_id, u.username AS task_creator_name,
+              r.created_at
+       FROM requests r
+       JOIN tasks t ON r.task_id = t.id
+       JOIN users u ON t.created_by = u.id
+       WHERE r.user_id = $1
+       ORDER BY r.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ requests: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -165,7 +256,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Update only task status
+// Update only task status
 router.patch("/:id/status", authMiddleware, async (req, res) => {
   const { status } = req.body;
 
@@ -203,6 +294,51 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     res.json({ message: "Task deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /tasks/:id/request
+router.post("/:id/request", authMiddleware, async (req, res) => {
+  const taskId = req.params.id;
+  const userId = req.user.id;
+
+  console.log("Request received - Task ID:", taskId, "User ID:", userId); // Debug log
+
+  try {
+    // Check if task exists
+    const taskResult = await pool.query(
+      "SELECT * FROM tasks WHERE id = $1",
+      [taskId]
+    );
+    console.log("Task found:", taskResult.rows.length > 0); // Debug log
+    
+    if (taskResult.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Check if already requested
+    const existingRequest = await pool.query(
+      "SELECT * FROM requests WHERE task_id = $1 AND user_id = $2",
+      [taskId, userId]
+    );
+    console.log("Already requested:", existingRequest.rows.length > 0); // Debug log
+    
+    if (existingRequest.rows.length > 0) {
+      return res.status(400).json({ message: "Already requested" });
+    }
+
+    // Insert request
+    const insertResult = await pool.query(
+      "INSERT INTO requests (task_id, user_id, status) VALUES ($1, $2, 'pending') RETURNING *",
+      [taskId, userId]
+    );
+    
+    console.log("Request inserted:", insertResult.rows[0]); // Debug log
+
+    res.json({ message: "Request sent to task creator" });
+  } catch (err) {
+    console.error("Error in request endpoint:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

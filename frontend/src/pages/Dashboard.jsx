@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import ProfileSection from "./ProfileSection";
 import TaskSection from "./TaskSection";
+import RequestSection from "./RequestSection";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -30,6 +31,8 @@ const Dashboard = () => {
 
   // For multi-select categories
   const [filterCategories, setFilterCategories] = useState([]);
+
+  const [userRequests, setUserRequests] = useState([]);
 
   const navigate = useNavigate();
 
@@ -179,10 +182,34 @@ const Dashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessage(res.data.message);
+      
+      // Refresh user requests after making a new request
+      const requestsRes = await axios.get("/api/tasks/user/requests", { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      setUserRequests(requestsRes.data.requests);
     } catch (err) {
       setMessage(err.response?.data?.message || "Error requesting task");
     }
   };
+
+  useEffect(() => {
+    const fetchUserRequests = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("/api/tasks/user/requests", { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        setUserRequests(res.data.requests);
+      } catch (err) {
+        console.error("Error fetching user requests:", err);
+      }
+    };
+    
+    if (user) {
+      fetchUserRequests();
+    }
+  }, [user]);
 
 
 
@@ -215,6 +242,7 @@ const Dashboard = () => {
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}    
             handleRequestTask={handleRequestTask}
           />
+          <RequestSection user={user} />
           <button onClick={handleLogout} className="mt-6 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
             Logout
           </button>

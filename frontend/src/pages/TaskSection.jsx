@@ -10,7 +10,8 @@ const TaskSection = ({
   displayedTasks, user,
   handleEditTask, handleDeleteTask,
   handleAcceptTask, handleStatusChange,
-  searchQuery, setSearchQuery
+  searchQuery, setSearchQuery,
+  handleRequestTask
 }) => {
 
   return (
