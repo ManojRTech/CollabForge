@@ -42,6 +42,71 @@ router.post("/:id/accept", authMiddleware, async (req, res) => {
   }
 });
 
+// POST /tasks/:id/request
+router.post("/tasks/:id/request", async (req, res) => {
+  const taskId = req.params.id;
+  const userId = req.user.id; // assume auth middleware sets req.user
+
+  const task = await Task.findById(taskId);
+  if (!task) return res.status(404).json({ message: "Task not found" });
+
+  // Check if already requested
+  if (task.pending_requests.some(r => r.user.toString() === userId)) {
+    return res.status(400).json({ message: "Already requested" });
+  }
+
+  task.pending_requests.push({ user: userId });
+  await task.save();
+
+  // TODO: Send notification to task.creator
+  res.json({ message: "Request sent to task creator" });
+});
+
+// POST /tasks/:id/approve
+router.post("/tasks/:id/approve", async (req, res) => {
+  const taskId = req.params.id;
+  const { userId } = req.body; // user to approve
+  const task = await Task.findById(taskId);
+  if (!task) return res.status(404).json({ message: "Task not found" });
+
+  // Only creator can approve
+  if (task.created_by.toString() !== req.user.id) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
+
+  // Check if user requested
+  const requestIndex = task.pending_requests.findIndex(r => r.user.toString() === userId);
+  if (requestIndex === -1) return res.status(400).json({ message: "User did not request this task" });
+
+  // Approve
+  task.assigned_to = userId;
+  task.pending_requests = []; // clear all pending requests
+  await task.save();
+
+  // TODO: Send notification to approved user
+  res.json({ message: "User approved", task });
+});
+
+// POST /tasks/:id/reject
+router.post("/tasks/:id/reject", async (req, res) => {
+  const taskId = req.params.id;
+  const { userId } = req.body; // user to reject
+  const task = await Task.findById(taskId);
+  if (!task) return res.status(404).json({ message: "Task not found" });
+
+  if (task.created_by.toString() !== req.user.id) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
+
+  // Remove from pending_requests
+  task.pending_requests = task.pending_requests.filter(r => r.user.toString() !== userId);
+  await task.save();
+
+  // TODO: Send notification to rejected user
+  res.json({ message: "User rejected" });
+});
+
+
 
 // Get all tasks
 router.get("/", authMiddleware, async (req, res) => {
