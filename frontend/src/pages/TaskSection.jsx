@@ -49,16 +49,6 @@ const TaskSection = ({
         <option value="urgent">Urgent</option>
       </select>
 
-      <select
-        value={newTask.status}
-        onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}
-        className="p-2 border rounded w-full mb-2"
-      >
-        <option value="open">Open</option>
-        <option value="in-progress">In Progress</option>
-        <option value="completed">Completed</option>
-      </select>
-
       <button
         onClick={editingTaskId ? handleUpdateTask : handleAddTask}
         className={`px-4 py-2 rounded text-white ${editingTaskId ? "bg-blue-500 hover:bg-blue-600" : "bg-green-500 hover:bg-green-600"}`}
@@ -78,17 +68,6 @@ const TaskSection = ({
           <option value="work">Work</option>
           <option value="personal">Personal</option>
           <option value="urgent">Urgent</option>
-        </select>
-
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="p-2 border rounded"
-        >
-          <option value="">All Statuses</option>
-          <option value="open">Open</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
         </select>
 
         <input
@@ -121,19 +100,39 @@ const TaskSection = ({
               <small>Category: {task.category || "General"}</small> <br />
               <small>Status: {task.status || "open"}</small><br />
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEditTask(task)}
-                className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
+            <div className="flex gap-2 flex-col">
+              {task.created_by === user.id && (
+                <div className="flex gap-2 mt-2">
+                  {task.status === "open" && (
+                    <button
+                      onClick={() => handleStatusChange(task.id, "in-progress")}
+                      className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Start
+                    </button>
+                  )}
+                  {task.status === "in-progress" && (
+                    <button
+                      onClick={() => handleStatusChange(task.id, "completed")}
+                      className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Complete
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleEditTask(task)}
+                    className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           </li>
         ))

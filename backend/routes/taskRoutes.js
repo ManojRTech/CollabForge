@@ -27,9 +27,9 @@ router.post("/:id/accept", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE tasks
-       SET status = 'accepted', assigned_to = $1
+       SET status = 'accepted'
        WHERE id = $2 AND created_by <> $1
-       RETURNING id, title, description, category, deadline, status, created_by, assigned_to`,
+       RETURNING id, title, description, category, deadline, status, created_by`,
       [req.user.id, req.params.id]
     );
 
@@ -107,17 +107,30 @@ router.post("/:id/approve", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "User did not request this task" });
     }
 
-    // Approve request
+    // Approve request and add user as a task member
     await pool.query(
-      "UPDATE requests SET status = 'approved' WHERE task_id = $1 AND user_id = $2",
+      `UPDATE requests
+      SET status = 'approved'
+      WHERE task_id = $1 AND user_id = $2`,
       [taskId, userId]
     );
 
-    // Assign task to this user
+    // Add the user to task_members as 'member' (if not already added)
     await pool.query(
-      "UPDATE tasks SET assigned_to = $1, status = 'in-progress' WHERE id = $2",
-      [userId, taskId]
+      `INSERT INTO task_members (task_id, user_id, role, joined_at)
+      VALUES ($1, $2, 'member', NOW())
+      ON CONFLICT (task_id, user_id) DO NOTHING`,
+      [taskId, userId]
     );
+
+    // Optionally, update task status to 'in-progress' if you want
+    await pool.query(
+      `UPDATE tasks
+      SET status = 'in-progress'
+      WHERE id = $1`,
+      [taskId]
+    );
+
 
     res.json({ message: "User approved and task assigned" });
   } catch (err) {
@@ -256,28 +269,53 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// Update only task status
+// PATCH /api/tasks/:id/status
 router.patch("/:id/status", authMiddleware, async (req, res) => {
   const { status } = req.body;
+  const taskId = req.params.id;
 
   try {
-    const result = await pool.query(
-      `UPDATE tasks
-       SET status = $1
-       WHERE id = $2 AND created_by = $3
-       RETURNING id, title, description, category, deadline, status, created_at`,
-      [status, req.params.id, req.user.id]
+    // 1️⃣ Verify task belongs to creator
+    const taskRes = await pool.query(
+      `SELECT * FROM tasks WHERE id = $1 AND created_by = $2`,
+      [taskId, req.user.id]
     );
 
-    if (result.rows.length === 0) {
+    if (taskRes.rows.length === 0) {
       return res.status(404).json({ message: "Task not found or not yours" });
     }
 
-    res.json({ task: result.rows[0] });
+    const task = taskRes.rows[0];
+
+    // 2️⃣ If status is changing to in-progress, add approved users to task_members
+    if (status === "in-progress") {
+      await pool.query(
+        `INSERT INTO task_members (task_id, user_id, role, joined_at)
+         SELECT $1, user_id, 'member', NOW()
+         FROM requests
+         WHERE task_id = $1 AND status = 'approved'
+         ON CONFLICT (task_id, user_id) DO NOTHING`,
+        [taskId]
+      );
+    }
+
+    // 3️⃣ Update task status
+    const updateRes = await pool.query(
+      `UPDATE tasks
+       SET status = $1
+       WHERE id = $2
+       RETURNING id, title, description, category, deadline, status, created_at`,
+      [status, taskId]
+    );
+
+    res.json({ task: updateRes.rows[0] });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
+
+
 
 // Delete a task
 router.delete("/:id", authMiddleware, async (req, res) => {
