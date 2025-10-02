@@ -4,6 +4,7 @@ import axios from "axios";
 import ProfileSection from "./ProfileSection";
 import TaskSection from "./TaskSection";
 import RequestSection from "./RequestSection";
+import TaskChat from "./TaskChat";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -33,6 +34,10 @@ const Dashboard = () => {
   const [filterCategories, setFilterCategories] = useState([]);
 
   const [userRequests, setUserRequests] = useState([]);
+
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  const [taskMembers, setTaskMembers] = useState({});
 
   const navigate = useNavigate();
 
@@ -211,7 +216,17 @@ const Dashboard = () => {
     }
   }, [user]);
 
-
+  const fetchTaskMembers = async (taskId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`/api/tasks/${taskId}/members`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTaskMembers(prev => ({ ...prev, [taskId]: res.data.members }));
+    } catch (err) {
+      console.error("Error fetching task members:", err);
+    }
+  };
 
   if (loading) return <p className="p-6 text-center">Loading...</p>;
 
@@ -246,6 +261,7 @@ const Dashboard = () => {
           <button onClick={handleLogout} className="mt-6 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
             Logout
           </button>
+
         </>
       )}
     </div>

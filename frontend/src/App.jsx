@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./pages/Navbar";
+import TaskChat from "./pages/TaskChat";
 
 const PrivateRoute = ({ children, token }) => { // ⬅️ Take token as a prop
   return token ? children : <Navigate to="/auth" />;
@@ -29,6 +30,7 @@ function App() {
             <Dashboard />
           </PrivateRoute>
         } />
+        <Route path="/task/:taskId/chat" element={<TaskChat />} />
       </Routes>
     </Router>
   );

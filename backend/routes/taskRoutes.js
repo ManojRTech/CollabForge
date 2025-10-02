@@ -4,19 +4,43 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Create a new task
+// Create a new task - UPDATED to auto-add creator as member
 router.post("/", authMiddleware, async (req, res) => {
   const { title, description, deadline, category } = req.body;
 
   try {
-    const result = await pool.query(
-      `INSERT INTO tasks (title, description, category, deadline, status, created_by)
-       VALUES ($1, $2, $3, $4, 'open', $5)
-       RETURNING id, title, description, category, deadline, status, created_by, created_at`,
-      [title, description, category, deadline, req.user.id]
-    );
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
 
-    res.status(201).json({ task: result.rows[0] });
+      // Insert task
+      const taskResult = await client.query(
+        `INSERT INTO tasks (title, description, category, deadline, status, created_by)
+         VALUES ($1, $2, $3, $4, 'open', $5)
+         RETURNING id, title, description, category, deadline, status, created_by, created_at`,
+        [title, description, category, deadline, req.user.id]
+      );
+
+      const task = taskResult.rows[0];
+
+      // Auto-add creator as task member with 'creator' role
+      await client.query(
+        `INSERT INTO task_members (task_id, user_id, role, joined_at)
+         VALUES ($1, $2, 'creator', NOW())`,
+        [task.id, req.user.id]
+      );
+
+      await client.query('COMMIT');
+      res.status(201).json({ task });
+
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -228,16 +252,23 @@ router.get("/user/requests", authMiddleware, async (req, res) => {
 });
 
 // Get a single task
+// Get a single task - UPDATED to allow task members
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, title, description, category, deadline, status, created_by, created_at
-       FROM tasks WHERE id = $1 AND created_by = $2`,
+      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, 
+              t.created_at, t.created_by, u.username as creator_username
+       FROM tasks t
+       JOIN users u ON t.created_by = u.id
+       WHERE t.id = $1 
+       AND (t.created_by = $2 OR EXISTS (
+         SELECT 1 FROM task_members WHERE task_id = $1 AND user_id = $2
+       ))`,
       [req.params.id, req.user.id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Task not found" });
+      return res.status(404).json({ message: "Task not found or access denied" });
     }
 
     res.json({ task: result.rows[0] });
@@ -269,25 +300,27 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// PATCH /api/tasks/:id/status
+// PATCH /api/tasks/:id/status - UPDATED to allow task members
 router.patch("/:id/status", authMiddleware, async (req, res) => {
   const { status } = req.body;
   const taskId = req.params.id;
 
   try {
-    // 1️⃣ Verify task belongs to creator
+    // Verify task exists and user has access (creator or member)
     const taskRes = await pool.query(
-      `SELECT * FROM tasks WHERE id = $1 AND created_by = $2`,
+      `SELECT t.* FROM tasks t
+       LEFT JOIN task_members tm ON t.id = tm.task_id AND tm.user_id = $2
+       WHERE t.id = $1 AND (t.created_by = $2 OR tm.user_id = $2)`,
       [taskId, req.user.id]
     );
 
     if (taskRes.rows.length === 0) {
-      return res.status(404).json({ message: "Task not found or not yours" });
+      return res.status(404).json({ message: "Task not found or access denied" });
     }
 
     const task = taskRes.rows[0];
 
-    // 2️⃣ If status is changing to in-progress, add approved users to task_members
+    // If status is changing to in-progress, add approved users to task_members
     if (status === "in-progress") {
       await pool.query(
         `INSERT INTO task_members (task_id, user_id, role, joined_at)
@@ -299,7 +332,7 @@ router.patch("/:id/status", authMiddleware, async (req, res) => {
       );
     }
 
-    // 3️⃣ Update task status
+    // Update task status
     const updateRes = await pool.query(
       `UPDATE tasks
        SET status = $1
@@ -377,6 +410,123 @@ router.post("/:id/request", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("Error in request endpoint:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET all members for a task - UPDATED to return usernames
+router.get("/:id/members", authMiddleware, async (req, res) => {
+  const taskId = req.params.id;
+
+  try {
+    // Only allow task creator or task members to view
+    const membership = await pool.query(
+      `SELECT 1 FROM task_members WHERE task_id = $1 AND user_id = $2
+       UNION
+       SELECT 1 FROM tasks WHERE id = $1 AND created_by = $2`,
+      [taskId, req.user.id]
+    );
+
+    if (membership.rows.length === 0) {
+      return res.status(403).json({ message: "Not authorized to view members" });
+    }
+
+    // Fetch all members of the task with usernames
+    const result = await pool.query(
+      `SELECT tm.user_id, tm.role, tm.joined_at, u.username
+       FROM task_members tm
+       JOIN users u ON tm.user_id = u.id
+       WHERE tm.task_id = $1
+       ORDER BY tm.joined_at ASC`,
+      [taskId]
+    );
+
+    res.json({ members: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// GET /api/tasks/user/memberships - Get all tasks where user is a member
+router.get("/user/memberships", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT tm.task_id, tm.role, tm.joined_at, t.title, t.status
+       FROM task_members tm
+       JOIN tasks t ON tm.task_id = t.id
+       WHERE tm.user_id = $1
+       ORDER BY tm.joined_at DESC`,
+      [req.user.id]
+    );
+
+    res.json({ memberships: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET all messages for a task
+router.get("/:id/messages", authMiddleware, async (req, res) => {
+  const taskId = req.params.id;
+
+  try {
+    // Check membership or creator
+    const membership = await pool.query(
+      `SELECT 1 FROM task_members WHERE task_id = $1 AND user_id = $2
+       UNION
+       SELECT 1 FROM tasks WHERE id = $1 AND created_by = $2`,
+      [taskId, req.user.id]
+    );
+
+    if (membership.rows.length === 0) {
+      return res.status(403).json({ message: "Not authorized to view messages" });
+    }
+
+    const result = await pool.query(
+      `SELECT m.id, m.message, m.created_at, u.username
+       FROM chat_messages m
+       JOIN users u ON m.user_id = u.id
+       WHERE m.task_id = $1
+       ORDER BY m.created_at ASC`,
+      [taskId]
+    );
+
+    res.json({ messages: result.rows });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST a new message
+router.post("/:id/messages", authMiddleware, async (req, res) => {
+  const taskId = req.params.id;
+  const { message } = req.body;
+
+  try {
+    // Check membership or creator
+    const membership = await pool.query(
+      `SELECT 1 FROM task_members WHERE task_id = $1 AND user_id = $2
+       UNION
+       SELECT 1 FROM tasks WHERE id = $1 AND created_by = $2`,
+      [taskId, req.user.id]
+    );
+
+    if (membership.rows.length === 0) {
+      return res.status(403).json({ message: "Not authorized to post message" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO chat_messages (task_id, user_id, message, created_at)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING id, task_id, user_id, message, created_at`,
+      [taskId, req.user.id, message]
+    );
+
+    res.status(201).json({ message: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
