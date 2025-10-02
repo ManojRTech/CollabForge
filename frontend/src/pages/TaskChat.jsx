@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { io } from "socket.io-client";
+import TeamContactsModal from "./TeamContactsModal";
 
 const TaskChat = () => {
+  const [socket, setSocket] = useState(null);
   const { taskId } = useParams();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
@@ -11,7 +14,39 @@ const TaskChat = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
+  const [showContacts, setShowContacts] = useState(false); // Added this line
+
+  // WebSocket connection
+  useEffect(() => {
+    const newSocket = io("http://localhost:5000");
+    setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+        console.log('✅ WebSocket connected successfully');
+    });
+
+    newSocket.on('connect_error', (error) => {
+        console.error('❌ WebSocket connection error:', error);
+    });
+
+    newSocket.emit('join-task', taskId);
+
+    newSocket.on('new-message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('Socket error:', error);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [taskId]);
+
+  // Fetch initial data
   useEffect(() => {
     const fetchChatData = async () => {
       try {
@@ -21,7 +56,13 @@ const TaskChat = () => {
           return;
         }
 
-        // Fetch task details and verify access
+        // Get current user from token or API
+        const userRes = await axios.get("/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCurrentUser(userRes.data.user);
+
+        // Fetch task details and members
         const [taskRes, membersRes] = await Promise.all([
           axios.get(`/api/tasks/${taskId}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -64,34 +105,17 @@ const TaskChat = () => {
     }
   };
 
-  // Add real-time message polling
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchMessages();
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(interval);
-  }, [taskId]);
-
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !socket || !currentUser) return;
 
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `/api/tasks/${taskId}/messages`,
-        { message: newMessage },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    socket.emit('send-message', {
+      taskId,
+      message: newMessage,
+      userId: currentUser.id
+    });
 
-      setMessages(prev => [...prev, res.data.message]);
-      setNewMessage("");
-    } catch (err) {
-      console.error("Error sending message:", err);
-      setError("Failed to send message");
-      setTimeout(() => setError(""), 3000);
-    }
+    setNewMessage("");
   };
 
   if (loading) return <div className="p-6 text-center">Loading chat...</div>;
@@ -100,25 +124,34 @@ const TaskChat = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-        {/* Header */}
+        {/* Header - ADDED TEAM CONTACTS BUTTON HERE */}
         <div className="p-4 border-b bg-blue-600 text-white rounded-t-lg">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">{task?.title}</h1>
               <p className="text-blue-100">{task?.description}</p>
             </div>
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded text-white"
-            >
-              Back to Dashboard
-            </button>
+            <div className="flex gap-2"> {/* Added flex container for buttons */}
+              <button
+                onClick={() => setShowContacts(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white transition-colors"
+              >
+                <span>👥</span>
+                Team Contacts
+              </button>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded text-white"
+              >
+                Back to Dashboard
+              </button>
+            </div>
           </div>
           
           {/* Members info */}
           <div className="mt-2">
             <span className="text-blue-200">
-              Members: {members.map(m => m.username).join(", ")}
+              Members: {members.length > 0 ? members.map(m => m.username).join(", ") : "Loading..."}
             </span>
           </div>
         </div>
@@ -165,6 +198,13 @@ const TaskChat = () => {
             </button>
           </div>
         </form>
+
+        {/* ADDED TEAM CONTACTS MODAL AT THE BOTTOM */}
+        <TeamContactsModal
+          taskId={taskId}
+          isOpen={showContacts}
+          onClose={() => setShowContacts(false)}
+        />
       </div>
     </div>
   );

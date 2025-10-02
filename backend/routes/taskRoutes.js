@@ -147,15 +147,6 @@ router.post("/:id/approve", authMiddleware, async (req, res) => {
       [taskId, userId]
     );
 
-    // Optionally, update task status to 'in-progress' if you want
-    await pool.query(
-      `UPDATE tasks
-      SET status = 'in-progress'
-      WHERE id = $1`,
-      [taskId]
-    );
-
-
     res.json({ message: "User approved and task assigned" });
   } catch (err) {
     console.error(err);
@@ -277,6 +268,53 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// routes/tasks.js
+router.get('/:id/team-contacts', authMiddleware, async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    
+    // Verify user has access to this task
+    const accessCheck = await pool.query(
+      `SELECT 1 FROM task_members WHERE task_id = $1 AND user_id = $2
+       UNION
+       SELECT 1 FROM tasks WHERE id = $1 AND created_by = $2`,
+      [taskId, req.user.id]
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Get all team members with their contact info
+    const result = await pool.query(
+      `SELECT 
+         u.id, 
+         u.username,
+         u.email,
+         u.github_url,
+         u.phone,
+         u.linkedin_url,
+         u.show_github,
+         u.show_email,
+         u.show_phone,
+         tm.role,
+         tm.joined_at
+       FROM task_members tm
+       JOIN users u ON tm.user_id = u.id
+       WHERE tm.task_id = $1
+       ORDER BY 
+         CASE WHEN tm.role = 'creator' THEN 1 ELSE 2 END,
+         u.username`,
+      [taskId]
+    );
+
+    res.json({ teamMembers: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Update a task (all fields)
 router.put("/:id", authMiddleware, async (req, res) => {
   const { title, description, category, deadline, status } = req.body;
@@ -347,8 +385,6 @@ router.patch("/:id/status", authMiddleware, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-
 
 // Delete a task
 router.delete("/:id", authMiddleware, async (req, res) => {
@@ -527,6 +563,35 @@ router.post("/:id/messages", authMiddleware, async (req, res) => {
     res.status(201).json({ message: result.rows[0] });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// In your tasks routes
+router.patch("/:id/progress", authMiddleware, async (req, res) => {
+  const { progress } = req.body;
+  const taskId = req.params.id;
+
+  try {
+    // Verify task belongs to user
+    const taskRes = await pool.query(
+      "SELECT * FROM tasks WHERE id = $1 AND created_by = $2",
+      [taskId, req.user.id]
+    );
+
+    if (taskRes.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found or not authorized" });
+    }
+
+    // Update progress
+    const result = await pool.query(
+      "UPDATE tasks SET progress = $1 WHERE id = $2 RETURNING *",
+      [progress, taskId]
+    );
+
+    res.json({ task: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

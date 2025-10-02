@@ -18,6 +18,29 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
+// routes/userRoutes.js
+router.patch('/contact-settings', authMiddleware, async (req, res) => {
+  try {
+    const { github_url, phone, show_github, show_email, show_phone } = req.body;
+    
+    const result = await pool.query(
+      `UPDATE users 
+       SET github_url = $1, phone = $2, show_github = $3, show_email = $4, show_phone = $5
+       WHERE id = $6
+       RETURNING id, username, email, github_url, phone, show_github, show_email, show_phone`,
+      [github_url, phone, show_github, show_email, show_phone, req.user.id]
+    );
+
+    res.json({ 
+      message: "Contact settings updated successfully",
+      user: result.rows[0] 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Protected route: Update profile + optional password change
 router.put("/me", authMiddleware, async (req, res) => {
   const { username, bio, interests, currentPassword, newPassword } = req.body;
