@@ -1,0 +1,121 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const CreateTask = () => {
+  const [newTask, setNewTask] = useState({ 
+    title: "", 
+    description: "", 
+    deadline: "", 
+    category: "general", 
+    status: "open" 
+  });
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+
+  const handleAddTask = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post("/api/tasks", newTask, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setMessage("Task created successfully!");
+      setNewTask({ title: "", description: "", deadline: "", category: "general", status: "open" });
+      
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
+    } catch (err) {
+      setMessage("Error creating task: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Create New Task</h1>
+      
+      {message && (
+        <div className={`mb-4 p-3 rounded ${
+          message.includes('successfully') 
+            ? 'bg-green-100 text-green-700' 
+            : 'bg-red-100 text-red-700'
+        }`}>
+          {message}
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              placeholder="Task title"
+              value={newTask.title}
+              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              placeholder="Task description"
+              value={newTask.description}
+              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              rows="4"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+            <input
+              type="date"
+              value={newTask.deadline}
+              onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select
+              value={newTask.category}
+              onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="general">General</option>
+              <option value="work">Work</option>
+              <option value="personal">Personal</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={newTask.status}
+              onChange={(e) => setNewTask({ ...newTask, status: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="open">Open</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleAddTask}
+            className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium text-lg"
+          >
+            Create Task
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CreateTask;
