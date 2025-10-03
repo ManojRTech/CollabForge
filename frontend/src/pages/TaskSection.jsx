@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import axios from "axios";
 import { 
   Calendar, 
@@ -25,6 +26,7 @@ const TaskSection = ({
   const [userTaskMemberships, setUserTaskMemberships] = useState({});
   const [taskProgress, setTaskProgress] = useState({});
   const [userRequests, setUserRequests] = useState({});
+  const navigate = useNavigate(); 
 
   // Fetch user's task memberships AND requests
   useEffect(() => {
@@ -320,6 +322,13 @@ const TaskSection = ({
                               <Trash2 size={16} className="mr-1" />
                               Delete
                             </button>
+                            <button
+                              onClick={() => navigate(`/create-task/${task.id}`)} // ⬅️ navigate with taskId
+                              className="flex items-center justify-center px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium"
+                            >
+                              ✏️ Edit
+                            </button>
+
                             {canSeeChatButton(task) && (
                               <button
                                 onClick={() => window.open(`/task/${task.id}/chat`, '_blank')}

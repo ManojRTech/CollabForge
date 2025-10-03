@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 const CreateTask = () => {
@@ -12,34 +12,72 @@ const CreateTask = () => {
   });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const { id } = useParams(); // ⬅️ get :id if editing
 
-  const handleAddTask = async () => {
+  // If editing, fetch existing task
+  useEffect(() => {
+    if (id) {
+      const fetchTask = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const res = await axios.get(`/api/tasks/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          // Ensure deadline is formatted properly for <input type="date" />
+          const formattedTask = {
+            ...res.data.task,
+            deadline: res.data.task.deadline
+              ? new Date(res.data.task.deadline).toISOString().split("T")[0]
+              : ""
+          };
+
+          setNewTask(formattedTask);
+        } catch (err) {
+          setMessage("Error fetching task: " + (err.response?.data?.message || err.message));
+        }
+      };
+      fetchTask();
+    }
+  }, [id]);
+
+  const handleSubmit = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post("/api/tasks", newTask, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setMessage("Task created successfully!");
+
+      if (id) {
+        // Update task
+        await axios.put(`/api/tasks/${id}`, newTask, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMessage("Task updated successfully!");
+      } else {
+        // Create new task
+        await axios.post("/api/tasks", newTask, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMessage("Task created successfully!");
+      }
+
+      // Reset form & redirect
       setNewTask({ title: "", description: "", deadline: "", category: "general", status: "open" });
-      
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
-      setMessage("Error creating task: " + (err.response?.data?.message || err.message));
+      setMessage("Error: " + (err.response?.data?.message || err.message));
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Create New Task</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        {id ? "Edit Task" : "Create New Task"}
+      </h1>
       
       {message && (
         <div className={`mb-4 p-3 rounded ${
-          message.includes('successfully') 
-            ? 'bg-green-100 text-green-700' 
-            : 'bg-red-100 text-red-700'
+          message.includes("successfully") 
+            ? "bg-green-100 text-green-700" 
+            : "bg-red-100 text-red-700"
         }`}>
           {message}
         </div>
@@ -107,10 +145,10 @@ const CreateTask = () => {
           </div>
 
           <button
-            onClick={handleAddTask}
+            onClick={handleSubmit}
             className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium text-lg"
           >
-            Create Task
+            {id ? "Update Task" : "Create Task"}
           </button>
         </div>
       </div>

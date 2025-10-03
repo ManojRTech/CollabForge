@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -18,6 +18,26 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(null);
 
+  // Fetch user when token changes
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (token) {
+        try {
+          const userRes = await fetch("/api/user/me", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            setUser(userData.user);
+          }
+        } catch (err) {
+          console.error("Error fetching user:", err);
+        }
+      }
+    };
+    fetchUser();
+  }, [token]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
@@ -35,7 +55,7 @@ function App() {
         <Route path="/dashboard" element={
           <PrivateRoute token={token}>
             <Layout user={user}>
-              <Dashboard user={user} setUser={setUser} />
+              <Dashboard />
             </Layout>
           </PrivateRoute>
         } />
@@ -49,6 +69,15 @@ function App() {
         } />
         
         <Route path="/create-task" element={
+          <PrivateRoute token={token}>
+            <Layout user={user}>
+              <CreateTask />
+            </Layout>
+          </PrivateRoute>
+        } />
+
+        {/* ADD THIS MISSING ROUTE FOR EDITING */}
+        <Route path="/create-task/:id" element={
           <PrivateRoute token={token}>
             <Layout user={user}>
               <CreateTask />
