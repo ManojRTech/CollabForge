@@ -104,18 +104,60 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) return <p className="p-6 text-center">Loading...</p>;
+  // Calculate task counts
+  const myTasksCount = displayedTasks.filter(task => task.created_by === user?.id).length;
+  const availableTasksCount = displayedTasks.filter(task => task.created_by !== user?.id).length;
+
+  if (loading) return (
+    <div className="flex justify-center items-center min-h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
+  
   if (!user) return <p className="p-6 text-center">Loading user data...</p>;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">Welcome back, {user.username}!</p>
+    <div className="w-full min-w-full px-6"> {/* REMOVED max-width constraint */}
+      {/* Centered Header with Stats */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+        <p className="text-gray-600 mb-6">Welcome back, {user.username}! Here's your task overview.</p>
+
+        {/* Task Stats - Centered and side by side */}
+        <div className="flex flex-col md:flex-row justify-center gap-6 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 w-full max-w-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700">My Tasks</h3>
+                <p className="text-3xl font-bold text-blue-600 mt-2">{myTasksCount}</p>
+                <p className="text-sm text-gray-500 mt-1">Tasks created by you</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-2xl">📝</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 w-full max-w-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700">Available Tasks</h3>
+                <p className="text-3xl font-bold text-green-600 mt-2">{availableTasksCount}</p>
+                <p className="text-sm text-gray-500 mt-1">Tasks from other users</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-2xl">🤝</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {message && <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">{message}</div>}
+      {message && (
+        <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg border border-green-200 text-center">
+          {message}
+        </div>
+      )}
 
       {/* Task Section */}
       <TaskSection

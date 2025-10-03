@@ -1,82 +1,109 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  PlusCircle, 
+  Mail, 
+  User, 
+  LogOut 
+} from 'lucide-react';
 
-const Layout = ({ children, user }) => {
+const Layout = ({ user, children }) => {
   const location = useLocation();
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-xl">
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            CollabForge
-          </h1>
-          <p className="text-sm text-gray-600 mt-2">Welcome back,</p>
-          <p className="font-semibold text-gray-800">{user?.username}</p>
+      <div className="w-64 bg-white shadow-lg">
+        {/* Profile Section */}
+        <div className="p-6 border-b">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+              {user?.username?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">{user?.username}</h3>
+              <p className="text-sm text-gray-600">{user?.email}</p>
+            </div>
+          </div>
         </div>
-        
-        <nav className="p-4">
-          <ul className="space-y-3">
-            <li>
-              <Link 
-                to="/dashboard" 
-                className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                  location.pathname === '/dashboard' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                <span className="mr-3 text-lg">📊</span>
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/profile" 
-                className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                  location.pathname === '/profile' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                <span className="mr-3 text-lg">👤</span>
-                Profile
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/requests" 
-                className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                  location.pathname === '/requests' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                <span className="mr-3 text-lg">🔔</span>
-                Requests
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/create-task" 
-                className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                  location.pathname === '/create-task' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                <span className="mr-3 text-lg">➕</span>
-                Create Task
-              </Link>
-            </li>
-          </ul>
+
+        {/* Navigation Links */}
+        <nav className="p-4 space-y-1">
+          <Link
+            to="/dashboard"
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/dashboard' 
+                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <LayoutDashboard size={20} />
+            <span className="font-medium">Dashboard</span>
+          </Link>
+          
+          <Link
+            to="/create-task"
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/create-task' 
+                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <PlusCircle size={20} />
+            <span className="font-medium">Create Task</span>
+          </Link>
+          
+          <Link
+            to="/requests"
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/requests' 
+                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Mail size={20} />
+            <span className="font-medium">Requests</span>
+          </Link>
+          
+          <Link
+            to="/profile"
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/profile' 
+                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <User size={20} />
+            <span className="font-medium">Profile Settings</span>
+          </Link>
         </nav>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 p-6">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Navigation Bar */}
+        <nav className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">Task Manager</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-600">Welcome, {user?.username}</span>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                window.location.href = "/auth";
+              }}
+              className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Page Content - FIXED: Remove the wrapper div that limits width */}
+        <div className="flex-1 overflow-auto bg-gray-50">
           {children}
         </div>
       </div>

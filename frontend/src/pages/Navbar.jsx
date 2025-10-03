@@ -18,18 +18,28 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="p-4 flex gap-4 bg-gray-100">
-      <Link to="/">Home</Link>
-      {!token && <Link to="/auth">Login/Register</Link>}
-      {token && <Link to="/dashboard">Dashboard</Link>}
-      {token && (
-        <button
-          onClick={handleLogout}
-          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Logout
-        </button>
-      )}
+    <nav className="p-4 bg-white shadow-sm border-b">
+      <div className="flex justify-between items-center"> {/* REMOVED max-w-7xl mx-auto */}
+        <Link to="/" className="font-bold text-xl text-gray-800">TaskManager</Link>
+        <div className="flex gap-4">
+          {!token && (
+            <Link 
+              to="/auth" 
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Login/Register
+            </Link>
+          )}
+          {token && (
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              Logout
+            </button>
+          )}
+        </div>
+      </div>
     </nav>
   );
 };

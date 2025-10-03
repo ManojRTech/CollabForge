@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { 
+  Calendar, 
+  Tag, 
+  MessageCircle, 
+  Play, 
+  CheckCircle, 
+  XCircle, 
+  Trash2,
+  Clock,
+  AlertCircle
+} from 'lucide-react';
 
 const TaskSection = ({
   filterCategory, setFilterCategory,
@@ -141,15 +152,15 @@ const TaskSection = ({
   };
 
   return (
-    <div className="mt-8 border p-6 rounded shadow-lg w-full max-w-6xl mx-auto bg-white">
-      <h2 className="font-semibold text-2xl mb-6 text-gray-800">Task Management</h2>
+    <div className="w-full min-w-full px-6 py-4">
+      <h2 className="font-semibold text-2xl mb-6 text-gray-800 text-center">Task Management</h2>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+      <div className="flex flex-wrap gap-4 mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="p-2 border rounded flex-1 min-w-[150px]"
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 min-w-[150px]"
         >
           <option value="">All Categories</option>
           <option value="general">General</option>
@@ -161,7 +172,7 @@ const TaskSection = ({
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="p-2 border rounded flex-1 min-w-[150px]"
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 min-w-[150px]"
         >
           <option value="">All Status</option>
           <option value="open">Open</option>
@@ -175,24 +186,36 @@ const TaskSection = ({
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="p-2 border rounded flex-1 min-w-[200px]"
+          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 min-w-[200px]"
         />
 
         <button
           onClick={() => setSortByDeadline(sortByDeadline === "asc" ? "desc" : "asc")}
-          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+          className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
         >
           Sort by Deadline {sortByDeadline === "asc" ? "↑" : "↓"}
         </button>
       </div>
 
       {/* My Tasks */}
-      <div className="mb-8">
-        <h3 className="font-semibold text-xl mb-4 text-gray-700">My Tasks ({displayedTasks.filter(task => task.created_by === user.id).length})</h3>
+      <div className="mb-12">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-semibold text-xl text-gray-800">
+            My Tasks
+          </h3>
+          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+            {displayedTasks.filter(task => task.created_by === user.id).length} tasks
+          </span>
+        </div>
+        
         {displayedTasks.filter(task => task.created_by === user.id).length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No tasks created by you</p>
+          <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+            <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-500 text-lg font-medium">No tasks created by you yet</p>
+            <p className="text-gray-400 mt-2">Create your first task to get started!</p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-6">
             {displayedTasks
               .filter(task => task.created_by === user.id)
               .map(task => {
@@ -201,102 +224,114 @@ const TaskSection = ({
                 const progressColor = getProgressColor(progress, task.status);
                 
                 return (
-                  <div key={task.id} className="p-4 border rounded-lg bg-white shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-lg text-gray-800">{task.title}</h4>
-                        <p className="text-gray-600 mt-1">{task.description}</p>
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm text-gray-500">
-                          <div>Deadline: {task.deadline || "N/A"}</div>
-                          <div>Category: {task.category || "General"}</div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="text-sm text-gray-600">Status:</span>
-                          <span className={`font-medium ${
-                            task.status === 'completed' ? 'text-green-600' :
-                            task.status === 'in-progress' ? 'text-blue-600' :
-                            task.status === 'cancelled' ? 'text-red-600' :
-                            'text-orange-600'
-                          }`}>
-                            {task.status || "open"}
-                          </span>
-                          
-                          {task.status === "in-progress" && (
-                            <div className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
-                              Active Now
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="mt-3">
-                          <div className="flex justify-between text-xs text-gray-600 mb-1">
-                            <span>Progress</span>
-                            <span>{progressText}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${progressColor}`}
-                              style={{width: `${progress}%`}}
-                            ></div>
-                          </div>
-                        </div>
-                        
-                        {userTaskMemberships[task.id] && (
-                          <div className="text-green-600 text-sm mt-2">
-                            ✓ Has approved member(s)
-                          </div>
-                        )}
+                  <div key={task.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col min-h-[320px]">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-semibold text-lg text-gray-800 line-clamp-2 flex-1 mr-3">{task.title}</h4>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
+                          task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          task.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                          task.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-orange-100 text-orange-800'
+                        }`}>
+                          {task.status || "open"}
+                        </span>
                       </div>
                       
-                      <div className="flex gap-2 flex-col ml-4">
-                        {task.created_by === user.id && (
-                          <div className="flex gap-2 flex-wrap justify-end">
-                            {canStartTask(task) && (
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{task.description}</p>
+                      
+                      <div className="space-y-3 mb-4 text-sm">
+                        <div className="flex items-center text-gray-500">
+                          <Calendar size={16} className="mr-2 flex-shrink-0" />
+                          <span className="truncate">{task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}</span>
+                        </div>
+                        <div className="flex items-center text-gray-500">
+                          <Tag size={16} className="mr-2 flex-shrink-0" />
+                          <span className="truncate">{task.category || "General"}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">Progress</span>
+                          <span className="text-sm text-gray-500">{progressText}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className={`h-2.5 rounded-full transition-all duration-300 ${progressColor}`}
+                            style={{width: `${progress}%`}}
+                          ></div>
+                        </div>
+                      </div>
+                      
+                      {task.status === "in-progress" && (
+                        <div className="flex items-center justify-center mb-4">
+                          <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                            <Clock size={12} className="mr-2 animate-pulse" />
+                            Active Now
+                          </div>
+                        </div>
+                      )}
+                      
+                      {userTaskMemberships[task.id] && (
+                        <div className="text-green-600 text-sm text-center mb-4">
+                          ✓ Has approved member(s)
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
+                      {task.created_by === user.id && (
+                        <>
+                          {canStartTask(task) && (
+                            <button
+                              onClick={() => handleStartTask(task.id)}
+                              className="flex items-center justify-center w-full px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
+                            >
+                              <Play size={16} className="mr-2" />
+                              Start Task
+                            </button>
+                          )}
+
+                          {task.status === "in-progress" && (
+                            <div className="grid grid-cols-2 gap-2">
                               <button
-                                onClick={() => handleStartTask(task.id)}
-                                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm transition-colors"
+                                onClick={() => handleStatusChange(task.id, "completed")}
+                                className="flex items-center justify-center px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
                               >
-                                Start Task
+                                <CheckCircle size={16} className="mr-1" />
+                                Complete
                               </button>
-                            )}
+                              <button
+                                onClick={() => handleStatusChange(task.id, "cancelled")}
+                                className="flex items-center justify-center px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                              >
+                                <XCircle size={16} className="mr-1" />
+                                Cancel
+                              </button>
+                            </div>
+                          )}
 
-                            {task.status === "in-progress" && (
-                              <>
-                                <button
-                                  onClick={() => handleStatusChange(task.id, "completed")}
-                                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
-                                >
-                                  Complete
-                                </button>
-                                <button
-                                  onClick={() => handleStatusChange(task.id, "cancelled")}
-                                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            )}
-
+                          <div className="grid grid-cols-2 gap-2">
                             <button
                               onClick={() => handleDeleteTask(task.id)}
-                              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm transition-colors"
+                              className="flex items-center justify-center px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
                             >
+                              <Trash2 size={16} className="mr-1" />
                               Delete
                             </button>
-                            
                             {canSeeChatButton(task) && (
                               <button
                                 onClick={() => window.open(`/task/${task.id}/chat`, '_blank')}
-                                className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm transition-colors"
+                                className="flex items-center justify-center px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium"
                               >
+                                <MessageCircle size={16} className="mr-1" />
                                 Chat
                               </button>
                             )}
                           </div>
-                        )}
-                      </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -308,11 +343,23 @@ const TaskSection = ({
 
       {/* Available Tasks */}
       <div>
-        <h3 className="font-semibold text-xl mb-4 text-gray-700">Available Tasks ({displayedTasks.filter(task => task.created_by !== user.id).length})</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-semibold text-xl text-gray-800">
+            Available Tasks
+          </h3>
+          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+            {displayedTasks.filter(task => task.created_by !== user.id).length} tasks
+          </span>
+        </div>
+        
         {displayedTasks.filter(task => task.created_by !== user.id).length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No available tasks from other users</p>
+          <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+            <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-500 text-lg font-medium">No available tasks from other users</p>
+            <p className="text-gray-400 mt-2">Check back later for new opportunities!</p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-6">
             {displayedTasks
               .filter(task => task.created_by !== user.id)
               .map(task => {
@@ -323,78 +370,85 @@ const TaskSection = ({
                 const requestStatus = getRequestStatus(task.id);
                 
                 return (
-                  <div key={task.id} className="p-4 border rounded-lg bg-white shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-lg text-gray-800">{task.title}</h4>
-                        <p className="text-gray-600 mt-1">{task.description}</p>
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm text-gray-500">
-                          <div>Deadline: {task.deadline || "N/A"}</div>
-                          <div>Category: {task.category || "General"}</div>
+                  <div key={task.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col min-h-[320px]">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-semibold text-lg text-gray-800 line-clamp-2 flex-1 mr-3">{task.title}</h4>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
+                          task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          task.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                          task.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-orange-100 text-orange-800'
+                        }`}>
+                          {task.status || "open"}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{task.description}</p>
+                      
+                      <div className="space-y-3 mb-4 text-sm">
+                        <div className="flex items-center text-gray-500">
+                          <Calendar size={16} className="mr-2 flex-shrink-0" />
+                          <span className="truncate">{task.deadline ? new Date(task.deadline).toLocaleDateString() : "No deadline"}</span>
                         </div>
-                        
-                        <div className="flex items-center gap-2 mt-3">
-                          <span className="text-sm text-gray-600">Status:</span>
-                          <span className={`font-medium ${
-                            task.status === 'completed' ? 'text-green-600' :
-                            task.status === 'in-progress' ? 'text-blue-600' :
-                            task.status === 'cancelled' ? 'text-red-600' :
-                            'text-orange-600'
-                          }`}>
-                            {task.status || "open"}
-                          </span>
-                          
-                          {task.status === "in-progress" && (
-                            <div className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
-                              Active Now
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="mt-3">
-                          <div className="flex justify-between text-xs text-gray-600 mb-1">
-                            <span>Progress</span>
-                            <span>{progressText}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${progressColor}`}
-                              style={{width: `${progress}%`}}
-                            ></div>
-                          </div>
+                        <div className="flex items-center text-gray-500">
+                          <Tag size={16} className="mr-2 flex-shrink-0" />
+                          <span className="truncate">{task.category || "General"}</span>
                         </div>
                       </div>
                       
-                      <div className="flex gap-2 flex-col ml-4">
-                        {!hasRequested && !userTaskMemberships[task.id] && task.status === "open" && (
-                          <button
-                            onClick={() => handleRequestTask(task.id)}
-                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm transition-colors"
-                          >
-                            Request Task
-                          </button>
-                        )}
-                        
-                        {hasRequested && (
-                          <span className={`text-sm px-3 py-1 rounded ${
-                            requestStatus === 'approved' ? 'bg-green-100 text-green-800' :
-                            requestStatus === 'rejected' ? 'bg-red-100 text-red-800' :
-                            'bg-orange-100 text-orange-800'
-                          }`}>
-                            Request {requestStatus}
-                          </span>
-                        )}
-                        
-                        {canSeeChatButton(task) && (
-                          <button
-                            onClick={() => window.open(`/task/${task.id}/chat`, '_blank')}
-                            className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm transition-colors"
-                          >
-                            Chat
-                          </button>
-                        )}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">Progress</span>
+                          <span className="text-sm text-gray-500">{progressText}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className={`h-2.5 rounded-full ${progressColor}`}
+                            style={{width: `${progress}%`}}
+                          ></div>
+                        </div>
                       </div>
+                      
+                      {task.status === "in-progress" && (
+                        <div className="flex items-center justify-center mb-4">
+                          <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                            <Clock size={12} className="mr-2 animate-pulse" />
+                            Active Now
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
+                      {!hasRequested && !userTaskMemberships[task.id] && task.status === "open" && (
+                        <button
+                          onClick={() => handleRequestTask(task.id)}
+                          className="flex items-center justify-center w-full px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                        >
+                          Request Task
+                        </button>
+                      )}
+                      
+                      {hasRequested && (
+                        <div className={`text-center py-2.5 rounded-lg text-sm font-medium ${
+                          requestStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                          requestStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-orange-100 text-orange-800'
+                        }`}>
+                          Request {requestStatus}
+                        </div>
+                      )}
+                      
+                      {canSeeChatButton(task) && (
+                        <button
+                          onClick={() => window.open(`/task/${task.id}/chat`, '_blank')}
+                          className="flex items-center justify-center w-full px-4 py-2.5 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
+                        >
+                          <MessageCircle size={16} className="mr-2" />
+                          Open Chat
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
