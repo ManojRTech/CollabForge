@@ -9,12 +9,13 @@ const Auth = ({ setToken }) => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  
 
   const [contactInfo, setContactInfo] = useState({
     github_url: "",
     phone: "",
-    show_github: true,
-    show_email: true,
+    show_github: false,
+    show_email: false,
     show_phone: false,
   });
 

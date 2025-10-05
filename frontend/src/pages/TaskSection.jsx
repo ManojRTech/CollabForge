@@ -22,6 +22,7 @@ const TaskSection = ({
   handleStatusChange,
   searchQuery, setSearchQuery,
   handleRequestTask,
+  setMessage,
 }) => {
   const [userTaskMemberships, setUserTaskMemberships] = useState({});
   const [taskProgress, setTaskProgress] = useState({});
@@ -64,29 +65,12 @@ const TaskSection = ({
     fetchUserData();
   }, []);
 
-  // Handle progress update
-  const handleProgressUpdate = async (taskId, progress) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.patch(`/api/tasks/${taskId}/progress`, 
-        { progress },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setTaskProgress(prev => ({
-        ...prev,
-        [taskId]: progress
-      }));
-    } catch (err) {
-      console.error("Error updating progress:", err);
-    }
-  };
-
   // Get progress for a task
+  // Fix this duplicate function - remove one of them
   const getTaskProgress = (task) => {
-    if (taskProgress[task.id] !== undefined) return taskProgress[task.id];
-    if (task.progress !== undefined) return task.progress;
     if (task.status === "completed") return 100;
+    if (task.status === "open") return 0;
+    if (task.progress !== undefined && task.progress !== null) return task.progress;
     if (task.status === "in-progress") return 0;
     return 0;
   };
@@ -153,9 +137,31 @@ const TaskSection = ({
     return userRequests[taskId] || null;
   };
 
+  const handleProgressUpdate = async (taskId, newProgress) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(`/api/tasks/${taskId}/progress`, 
+        { progress: newProgress },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Update local state
+      setTaskProgress(prev => ({
+        ...prev,
+        [taskId]: newProgress
+      }));
+      
+      // Optional: Show success message
+      setMessage("Progress updated successfully!");
+    } catch (err) {
+      console.error("Error updating progress:", err);
+      setMessage("Error updating progress");
+    }
+  };
+
   return (
     <div className="w-full px-6 py-6">
-      <h2 className="font-semibold text-2xl mb-6 text-gray-800 text-center">Task Management</h2>
+      <h2 className="font-semibold text-2xl mb-6 text-gray-800 text-center">Project Hub</h2>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
@@ -185,7 +191,7 @@ const TaskSection = ({
 
         <input
           type="text"
-          placeholder="Search tasks..."
+          placeholder="Search Projects..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 min-w-[200px]"
@@ -203,18 +209,18 @@ const TaskSection = ({
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-semibold text-xl text-gray-800">
-            My Tasks
+            My Projects
           </h3>
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-            {displayedTasks.filter(task => task.created_by === user.id).length} tasks
+            {displayedTasks.filter(task => task.created_by === user.id).length} Projects
           </span>
         </div>
         
         {displayedTasks.filter(task => task.created_by === user.id).length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
             <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 text-lg font-medium">No tasks created by you yet</p>
-            <p className="text-gray-400 mt-2">Create your first task to get started!</p>
+            <p className="text-gray-500 text-lg font-medium">No Projects created by you yet</p>
+            <p className="text-gray-400 mt-2">Create your first Project to get started!</p>
           </div>
         ) : (
           <div className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
@@ -291,7 +297,7 @@ const TaskSection = ({
                               className="flex items-center justify-center w-full px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
                             >
                               <Play size={16} className="mr-2" />
-                              Start Task
+                              Start Project
                             </button>
                           )}
 
@@ -354,17 +360,17 @@ const TaskSection = ({
       <div>
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-semibold text-xl text-gray-800">
-            Available Tasks
+            Available Projects
           </h3>
           <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-            {displayedTasks.filter(task => task.created_by !== user.id).length} tasks
+            {displayedTasks.filter(task => task.created_by !== user.id).length} Projects
           </span>
         </div>
         
         {displayedTasks.filter(task => task.created_by !== user.id).length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
             <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 text-lg font-medium">No available tasks from other users</p>
+            <p className="text-gray-500 text-lg font-medium">No available Projects from other users</p>
             <p className="text-gray-400 mt-2">Check back later for new opportunities!</p>
           </div>
         ) : (
@@ -435,7 +441,7 @@ const TaskSection = ({
                           onClick={() => handleRequestTask(task.id)}
                           className="flex items-center justify-center w-full px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
                         >
-                          Request Task
+                          Request Project
                         </button>
                       )}
                       

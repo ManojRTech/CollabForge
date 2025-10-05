@@ -3,15 +3,44 @@ import pool from "../config/db.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import bcrypt from "bcryptjs";
 import upload from "../middleware/upload.js";
-import { updateProfile } from "../controllers/userController.js";
 
 const router = express.Router();
+
+const updateProfile = async (req, res) => {
+  try {
+    const { username, bio, interests } = req.body;
+
+    let profilePhotoUrl;
+    if (req.file) {
+      profilePhotoUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const result = await pool.query(
+      `UPDATE users
+       SET username = COALESCE($1, username),
+           bio = COALESCE($2, bio),
+           interests = COALESCE($3, interests),
+           profile_photo = COALESCE($4, profile_photo)
+       WHERE id = $5
+       RETURNING id, username, email, bio, interests, profile_photo, created_at`,
+      [username, bio, interests, profilePhotoUrl, req.user.id]
+    );
+
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating profile" });
+  }
+};
 
 // Protected route: Get logged-in user
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, username, email, bio, interests, profile_photo, created_at FROM users WHERE id = $1",
+      `SELECT id, username, email, bio, interests, profile_photo, created_at,
+              github_url, phone, show_github, show_email, show_phone
+       FROM users
+       WHERE id = $1`,
       [req.user.id]
     );
     res.json({ user: result.rows[0] });
@@ -19,6 +48,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 // Update profile (including optional profile photo)
 router.put(
@@ -74,6 +104,8 @@ router.put(
     }
   }
 );
+
+router.put("/me", authMiddleware, upload.single("profilePhoto"), updateProfile);
 
 // routes/userRoutes.js
 router.patch('/contact-settings', authMiddleware, async (req, res) => {

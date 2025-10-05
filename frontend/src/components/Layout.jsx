@@ -63,7 +63,7 @@ const profilePhotoUrl = user?.profile_photo
             }`}
           >
             <PlusCircle size={20} />
-            <span className="font-medium">Create Task</span>
+            <span className="font-medium">Create Project</span>
           </Link>
           
           <Link

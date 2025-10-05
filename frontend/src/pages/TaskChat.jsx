@@ -81,7 +81,7 @@ const TaskChat = () => {
       } catch (err) {
         console.error("Error fetching chat data:", err);
         if (err.response?.status === 403 || err.response?.status === 404) {
-          setError("You don't have access to this task chat");
+          setError("You don't have access to this Project chat");
         } else {
           setError("Failed to load chat");
         }

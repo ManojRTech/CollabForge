@@ -93,7 +93,7 @@ const RequestSection = ({ user }) => {
       {/* Incoming Requests Tab */}
       {activeTab === "incoming" && (
         <>
-          <h3 className="font-semibold mb-2">Requests for My Tasks</h3>
+          <h3 className="font-semibold mb-2">Requests for My Projects</h3>
           {incomingRequests.length === 0 ? (
             <p>No incoming requests.</p>
           ) : (
@@ -101,7 +101,7 @@ const RequestSection = ({ user }) => {
               {incomingRequests.map((req) => (
                 <li key={req.request_id} className="p-2 border-b">
                   <div>
-                    <strong>Task: {req.title}</strong> <br />
+                    <strong>Projects: {req.title}</strong> <br />
                     <small>Requested by: {req.username}</small> <br />
                     <small>Status: {req.status}</small> <br />
                     <small>
@@ -136,7 +136,7 @@ const RequestSection = ({ user }) => {
       {/* Outgoing Requests Tab */}
       {activeTab === "outgoing" && (
         <>
-          <h3 className="font-semibold mb-2">My Task Requests</h3>
+          <h3 className="font-semibold mb-2">My Projects Requests</h3>
           {outgoingRequests.length === 0 ? (
             <p>No requests made yet.</p>
           ) : (

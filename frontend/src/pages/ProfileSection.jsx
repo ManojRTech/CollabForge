@@ -26,8 +26,8 @@ const ProfileSection = () => {
   const [contactInfo, setContactInfo] = useState({
     github_url: "",
     phone: "",
-    show_github: true,
-    show_email: true,
+    show_github: false,
+    show_email: false,
     show_phone: false
   });
   const [showContactFields, setShowContactFields] = useState(false);
@@ -56,9 +56,9 @@ const ProfileSection = () => {
         setContactInfo({
           github_url: userData.github_url || "",
           phone: userData.phone || "",
-          show_github: userData.show_github !== false,
-          show_email: userData.show_email !== false,
-          show_phone: userData.show_phone || false
+          show_github: !!userData.show_github,  // convert to boolean
+          show_email: !!userData.show_email,
+          show_phone: !!userData.show_phone
         });
 
       } catch (err) {
@@ -112,15 +112,51 @@ const ProfileSection = () => {
       });
       
       setMessage("Contact information updated successfully!");
-      setUser({ ...user, ...res.data.user });
+      const updatedUser = res.data.user;
+      setUser({ ...user, ...updatedUser });
+
+      // Update contactInfo state too
+      setContactInfo({
+        github_url: updatedUser.github_url || "",
+        phone: updatedUser.phone || "",
+        show_github: !!updatedUser.show_github,
+        show_email: !!updatedUser.show_email,
+        show_phone: !!updatedUser.show_phone
+      });
+
     } catch (err) {
       setMessage(err.response?.data?.message || "Error updating contact info");
     }
   };
 
+
   const handleContactChange = (field, value) => {
     setContactInfo(prev => ({ ...prev, [field]: value }));
   };
+
+  const handlePasswordUpdate = async () => {
+    if (!currentPassword || !newPassword) {
+      setMessage("Please fill both password fields.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        "/api/auth/update-password",
+        { oldPassword: currentPassword, newPassword },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setMessage(res.data.message || "Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setShowPasswordFields(false); // hide fields after update
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Error updating password");
+    }
+  };
+
   
   if (loading) return <div className="p-6 text-center">Loading...</div>;
 
@@ -328,6 +364,16 @@ const ProfileSection = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            {showPasswordFields && (
+              <button
+                onClick={handlePasswordUpdate}
+                className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
+              >
+                Update Password
+              </button>
+            )}
+
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { progress } from "framer-motion";
 
 const CreateTask = () => {
   const [newTask, setNewTask] = useState({ 
@@ -8,7 +9,8 @@ const CreateTask = () => {
     description: "", 
     deadline: "", 
     category: "general", 
-    status: "open" 
+    status: "open",
+    progress: 0
   });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ const CreateTask = () => {
 
           setNewTask(formattedTask);
         } catch (err) {
-          setMessage("Error fetching task: " + (err.response?.data?.message || err.message));
+          setMessage("Error fetching Project: " + (err.response?.data?.message || err.message));
         }
       };
       fetchTask();
@@ -45,22 +47,35 @@ const CreateTask = () => {
     try {
       const token = localStorage.getItem("token");
 
+      // Ensure progress is properly handled
+      const taskToSave = {
+        ...newTask,
+        progress: newTask.status === "completed" ? 100 : Math.max(0, Math.min(100, newTask.progress || 0))
+      };
+
       if (id) {
-        // Update task
-        await axios.put(`/api/tasks/${id}`, newTask, {
+        // Update task - make sure progress is included
+        await axios.put(`/api/tasks/${id}`, taskToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setMessage("Task updated successfully!");
+        setMessage("Project updated successfully!");
       } else {
         // Create new task
-        await axios.post("/api/tasks", newTask, {
+        await axios.post("/api/tasks", taskToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setMessage("Task created successfully!");
+        setMessage("Project created successfully!");
       }
 
       // Reset form & redirect
-      setNewTask({ title: "", description: "", deadline: "", category: "general", status: "open" });
+      setNewTask({ 
+        title: "", 
+        description: "", 
+        deadline: "", 
+        category: "general", 
+        status: "open",
+        progress: 0 
+      });
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       setMessage("Error: " + (err.response?.data?.message || err.message));
@@ -70,7 +85,7 @@ const CreateTask = () => {
   return (
     <div className="w-full px-6">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        {id ? "Edit Task" : "Create New Task"}
+        {id ? "Edit Task" : "Create New Project"}
       </h1>
       
       {message && (
@@ -144,11 +159,23 @@ const CreateTask = () => {
             </select>
           </div>
 
+          <div> 
+            <label className="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={newTask.progress || 0}
+              onChange={(e) => setNewTask({ ...newTask, progress: Number(e.target.value) })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
           <button
             onClick={handleSubmit}
             className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium text-lg"
           >
-            {id ? "Update Task" : "Create Task"}
+            {id ? "Update Project" : "Create Project"}
           </button>
         </div>
       </div>

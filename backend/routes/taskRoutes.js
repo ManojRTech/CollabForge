@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Create a new task - UPDATED to auto-add creator as member
 router.post("/", authMiddleware, async (req, res) => {
-  const { title, description, deadline, category } = req.body;
+  const { title, description, deadline, category, progress } = req.body;
 
   try {
     const client = await pool.connect();
@@ -16,11 +16,12 @@ router.post("/", authMiddleware, async (req, res) => {
 
       // Insert task
       const taskResult = await client.query(
-        `INSERT INTO tasks (title, description, category, deadline, status, created_by)
-         VALUES ($1, $2, $3, $4, 'open', $5)
-         RETURNING id, title, description, category, deadline, status, created_by, created_at`,
-        [title, description, category, deadline, req.user.id]
+        `INSERT INTO tasks (title, description, category, deadline, status, created_by, progress)
+        VALUES ($1, $2, $3, $4, 'open', $5, $6)
+        RETURNING id, title, description, category, deadline, status, progress, created_by, created_at`,
+        [title, description, category, deadline, req.user.id, progress || 0]
       );
+
 
       const task = taskResult.rows[0];
 
@@ -190,7 +191,7 @@ router.post("/:id/reject", authMiddleware, async (req, res) => {
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, t.created_at, t.created_by
+      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, t.progress, t.created_at, t.created_by
        FROM tasks t
        ORDER BY t.created_at DESC`
     );
@@ -247,7 +248,7 @@ router.get("/user/requests", authMiddleware, async (req, res) => {
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, 
+      `SELECT t.id, t.title, t.description, t.category, t.deadline, t.status, t.progress, 
               t.created_at, t.created_by, u.username as creator_username
        FROM tasks t
        JOIN users u ON t.created_by = u.id
@@ -317,15 +318,15 @@ router.get('/:id/team-contacts', authMiddleware, async (req, res) => {
 
 // Update a task (all fields)
 router.put("/:id", authMiddleware, async (req, res) => {
-  const { title, description, category, deadline, status } = req.body;
+  const { title, description, category, deadline, status, progress } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE tasks
-       SET title = $1, description = $2, category = $3, deadline = $4, status = $5
-       WHERE id = $6 AND created_by = $7
-       RETURNING id, title, description, category, deadline, status, created_by, created_at`,
-      [title, description, category, deadline, status, req.params.id, req.user.id]
+      SET title = $1, description = $2, category = $3, deadline = $4, status = $5, progress = $6
+      WHERE id = $7 AND created_by = $8
+      RETURNING id, title, description, category, deadline, status, progress, created_by, created_at`,
+      [title, description, category, deadline, status, progress, req.params.id, req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -383,6 +384,37 @@ router.patch("/:id/status", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// In your tasks routes - Add this route
+router.patch("/:id/progress", authMiddleware, async (req, res) => {
+  const { progress } = req.body;
+  const taskId = req.params.id;
+
+  try {
+    // Verify task belongs to user or user is a member
+    const taskRes = await pool.query(
+      `SELECT t.* FROM tasks t
+       LEFT JOIN task_members tm ON t.id = tm.task_id AND tm.user_id = $2
+       WHERE t.id = $1 AND (t.created_by = $2 OR tm.user_id = $2)`,
+      [taskId, req.user.id]
+    );
+
+    if (taskRes.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found or not authorized" });
+    }
+
+    // Update progress
+    const result = await pool.query(
+      "UPDATE tasks SET progress = $1 WHERE id = $2 RETURNING *",
+      [progress, taskId]
+    );
+
+    res.json({ task: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

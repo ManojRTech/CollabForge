@@ -62,7 +62,7 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       await axios.delete(`/api/tasks/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setTasks(tasks.filter((t) => t.id !== id));
-      setMessage("Task deleted successfully!");
+      setMessage("Project deleted successfully!");
     } catch (err) { setMessage("Error deleting task"); }
   };
 
@@ -99,8 +99,15 @@ const Dashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessage(res.data.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => {
+        setMessage("");
+      }, 5000);
     } catch (err) {
-      setMessage(err.response?.data?.message || "Error requesting task");
+      setMessage(err.response?.data?.message || "Error requesting Project");
+      setTimeout(() => {
+        setMessage("");
+      }, 5000);
     }
   };
 
@@ -121,16 +128,16 @@ const Dashboard = () => {
       {/* Centered Header with Stats */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
-        <p className="text-gray-600 mb-6">Welcome back, {user.username}! Here's your task overview.</p>
+        <p className="text-gray-600 mb-6">Welcome back, {user.username}! Here's your Project overview.</p>
 
         {/* Task Stats - Centered and side by side */}
         <div className="flex flex-col md:flex-row justify-center gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 w-full max-w-md">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-700">My Tasks</h3>
+                <h3 className="text-lg font-semibold text-gray-700">My Projects</h3>
                 <p className="text-3xl font-bold text-blue-600 mt-2">{myTasksCount}</p>
-                <p className="text-sm text-gray-500 mt-1">Tasks created by you</p>
+                <p className="text-sm text-gray-500 mt-1">Projects created by you</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-2xl">📝</span>
@@ -141,9 +148,9 @@ const Dashboard = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 w-full max-w-md">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-700">Available Tasks</h3>
+                <h3 className="text-lg font-semibold text-gray-700">Available Projects</h3>
                 <p className="text-3xl font-bold text-green-600 mt-2">{availableTasksCount}</p>
-                <p className="text-sm text-gray-500 mt-1">Tasks from other users</p>
+                <p className="text-sm text-gray-500 mt-1">Projects from other users</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-2xl">🤝</span>
