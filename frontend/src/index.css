@@ -1,28 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* NUCLEAR RESET - This WILL fix the width issue */
-* {
-  box-sizing: border-box;
+/* GENTLE RESET - Fixes conflicts without breaking grid */
+html, body, #root {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 100% !important;
-}
-
-#root {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 100% !important;
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -31,6 +18,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure grid containers can expand */
+.grid {
+  width: 100%;
 }
 
 .line-clamp-2 {
@@ -63,4 +55,3 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
-

@@ -2,15 +2,35 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const Profile = () => {
+const ProfileSection = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
   
-  // Your existing profile state
+  // Profile fields
+
+  const [profilePhoto, setProfilePhoto] = useState(null); // File object
+  const [previewPhoto, setPreviewPhoto] = useState(null); // URL for preview
+  const [existingPhoto, setExistingPhoto] = useState(null); // Photo already saved on server
+
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [interests, setInterests] = useState("");
+  
+  // Password fields
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [message, setMessage] = useState("");
+  
+  // Contact info
+  const [contactInfo, setContactInfo] = useState({
+    github_url: "",
+    phone: "",
+    show_github: true,
+    show_email: true,
+    show_phone: false
+  });
+  const [showContactFields, setShowContactFields] = useState(false);
 
   const navigate = useNavigate();
 
@@ -21,7 +41,26 @@ const Profile = () => {
         const res = await axios.get("/api/user/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setUser(res.data.user);
+
+        const userData = res.data.user;
+
+        setUser(userData);
+
+        // If using full URL method:
+        setExistingPhoto(userData.profile_photo ? `http://localhost:5000${userData.profile_photo}` : null);
+
+        setUsername(userData.username || "");
+        setBio(userData.bio || "");
+        setInterests(userData.interests || "");
+
+        setContactInfo({
+          github_url: userData.github_url || "",
+          phone: userData.phone || "",
+          show_github: userData.show_github !== false,
+          show_email: userData.show_email !== false,
+          show_phone: userData.show_phone || false
+        });
+
       } catch (err) {
         console.error("Error fetching user:", err);
         navigate("/auth");
@@ -32,32 +71,57 @@ const Profile = () => {
     fetchUser();
   }, [navigate]);
 
-  // Your existing handleSaveProfile function
-  const handleSaveProfile = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const payload = { username: user.username, bio: user.bio, interests: user.interests };
-      if (currentPassword && newPassword) {
-        payload.currentPassword = currentPassword;
-        payload.newPassword = newPassword;
-      }
-      const res = await axios.put("/api/user/me", payload, { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
-      setUser(res.data.user);
-      setMessage("Profile updated successfully!");
-      setCurrentPassword(""); 
-      setNewPassword(""); 
-      setShowPasswordFields(false);
-      setTimeout(() => setMessage(""), 3000);
-    } catch (err) {
-      setMessage(err.response?.data?.message || "Error updating profile");
-      setTimeout(() => setMessage(""), 3000);
+
+  // Function to handle file selection
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePhoto(file);          // New file to upload
+      setPreviewPhoto(URL.createObjectURL(file)); // Show preview
     }
   };
 
-  const togglePasswordFields = () => setShowPasswordFields(!showPasswordFields);
+  const handleSaveProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("bio", bio);
+      formData.append("interests", interests);
+      if (profilePhoto) formData.append("profilePhoto", profilePhoto);
 
+      const res = await axios.put("/api/user/me", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setUser(res.data.user);
+      setMessage("Profile updated successfully!");
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Error updating profile");
+    }
+  };
+
+  const handleSaveContactInfo = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.patch("/api/user/contact-settings", contactInfo, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setMessage("Contact information updated successfully!");
+      setUser({ ...user, ...res.data.user });
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Error updating contact info");
+    }
+  };
+
+  const handleContactChange = (field, value) => {
+    setContactInfo(prev => ({ ...prev, [field]: value }));
+  };
+  
   if (loading) return <div className="p-6 text-center">Loading...</div>;
 
   return (
@@ -74,8 +138,50 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Your existing ProfileSection UI */}
-      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+      {/* Profile Photo */}
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 mb-6 flex flex-col items-center">
+        <h2 className="text-xl font-semibold mb-4">Profile Photo</h2>
+        
+        {previewPhoto ? (
+          <img src={previewPhoto} alt="Preview" className="w-32 h-32 rounded-full mb-4 object-cover" />
+        ) : existingPhoto ? (
+          <img src={existingPhoto} alt="Profile" className="w-32 h-32 rounded-full mb-4 object-cover" />
+        ) : (
+          <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4 text-gray-500">
+            No Photo
+          </div>
+        )}
+
+
+        {/* Hidden input */}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setProfilePhoto(file);
+              setPreviewPhoto(URL.createObjectURL(file));
+            }
+          }}
+          className="hidden"
+          id="profilePhoto"
+        />
+
+        <label
+          htmlFor="profilePhoto"
+          className="cursor-pointer px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+        >
+          Choose Profile Photo
+        </label>
+
+      </div>
+
+
+
+
+      {/* Basic Profile Info */}
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 mb-6">
         <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
         
         <div className="space-y-4">
@@ -83,9 +189,8 @@ const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <input
               type="text"
-              placeholder="Username"
-              value={user.username || ""}
-              onChange={(e) => setUser({ ...user, username: e.target.value })}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -93,9 +198,8 @@ const Profile = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
             <textarea
-              placeholder="Bio"
-              value={user.bio || ""}
-              onChange={(e) => setUser({ ...user, bio: e.target.value })}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
               rows="3"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -105,63 +209,138 @@ const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Interests</label>
             <input
               type="text"
-              placeholder="Interests"
-              value={user.interests || ""}
-              onChange={(e) => setUser({ ...user, interests: e.target.value })}
+              value={interests}
+              onChange={(e) => setInterests(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
+      </div>
 
-        {/* Password Section */}
-        <div className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Password</h2>
-            <button
-              onClick={togglePasswordFields}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-            >
-              {showPasswordFields ? "Cancel" : "Change Password"}
-            </button>
-          </div>
-
-          {showPasswordFields && (
-            <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                <input
-                  type="password"
-                  placeholder="Current Password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          )}
+      {/* Contact Information */}
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Contact Information</h2>
+          <button
+            onClick={() => setShowContactFields(!showContactFields)}
+            className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+          >
+            {showContactFields ? "Hide" : "Edit Contact Info"}
+          </button>
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={handleSaveProfile}
-          className="w-full mt-6 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-lg"
-        >
-          Save Profile Changes
-        </button>
+        {showContactFields && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
+              <input
+                type="url"
+                placeholder="https://github.com/yourusername"
+                value={contactInfo.github_url}
+                onChange={(e) => handleContactChange('github_url', e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input
+                type="tel"
+                placeholder="+1234567890"
+                value={contactInfo.phone}
+                onChange={(e) => handleContactChange('phone', e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={contactInfo.show_github}
+                  onChange={(e) => handleContactChange('show_github', e.target.checked)}
+                  className="mr-3"
+                />
+                Show GitHub to team members
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={contactInfo.show_email}
+                  onChange={(e) => handleContactChange('show_email', e.target.checked)}
+                  className="mr-3"
+                />
+                Show email to team members
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={contactInfo.show_phone}
+                  onChange={(e) => handleContactChange('show_phone', e.target.checked)}
+                  className="mr-3"
+                />
+                Show phone to team members
+              </label>
+            </div>
+
+            <button
+              onClick={handleSaveContactInfo}
+              className="w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
+            >
+              Save Contact Information
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Password Change */}
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Password</h2>
+          <button
+            onClick={() => setShowPasswordFields(!showPasswordFields)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+          >
+            {showPasswordFields ? "Cancel" : "Change Password"}
+          </button>
+        </div>
+
+        {showPasswordFields && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSaveProfile}
+        className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-lg"
+      >
+        Save Profile Changes
+      </button>
     </div>
   );
 };
 
-export default Profile;
+export default ProfileSection;

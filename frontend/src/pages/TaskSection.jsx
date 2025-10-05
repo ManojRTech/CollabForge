@@ -154,7 +154,7 @@ const TaskSection = ({
   };
 
   return (
-    <div className="w-full min-w-full px-6 py-4">
+    <div className="w-full px-6 py-6">
       <h2 className="font-semibold text-2xl mb-6 text-gray-800 text-center">Task Management</h2>
 
       {/* Filters */}
@@ -217,7 +217,7 @@ const TaskSection = ({
             <p className="text-gray-400 mt-2">Create your first task to get started!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {displayedTasks
               .filter(task => task.created_by === user.id)
               .map(task => {
@@ -226,7 +226,7 @@ const TaskSection = ({
                 const progressColor = getProgressColor(progress, task.status);
                 
                 return (
-                  <div key={task.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col min-h-[320px]">
+                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 flex flex-col min-h-[320px] w-full">
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-4">
                         <h4 className="font-semibold text-lg text-gray-800 line-clamp-2 flex-1 mr-3">{task.title}</h4>
@@ -368,7 +368,7 @@ const TaskSection = ({
             <p className="text-gray-400 mt-2">Check back later for new opportunities!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {displayedTasks
               .filter(task => task.created_by !== user.id)
               .map(task => {

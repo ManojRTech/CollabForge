@@ -6,9 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import Navbar from "./pages/Navbar";
 import TaskChat from "./pages/TaskChat";
 import Layout from "./components/Layout";
-import Profile from "./pages/Profile";
 import CreateTask from "./pages/CreateTask";
 import Requests from "./pages/Requests";
+import ProfileSection from "./pages/ProfileSection";
 
 const PrivateRoute = ({ children, token }) => {
   return token ? children : <Navigate to="/auth" />;
@@ -63,7 +63,7 @@ function App() {
         <Route path="/profile" element={
           <PrivateRoute token={token}>
             <Layout user={user}>
-              <Profile />
+              <ProfileSection />
             </Layout>
           </PrivateRoute>
         } />

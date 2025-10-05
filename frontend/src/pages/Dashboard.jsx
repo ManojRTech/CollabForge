@@ -117,7 +117,7 @@ const Dashboard = () => {
   if (!user) return <p className="p-6 text-center">Loading user data...</p>;
 
   return (
-    <div className="w-full min-w-full px-6"> {/* REMOVED max-width constraint */}
+    <div className="w-full !min-w-full px-6 mx-auto"> {/* REMOVED max-width constraint */}
       {/* Centered Header with Stats */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>

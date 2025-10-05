@@ -46,5 +46,8 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/line-clamp')],
+  safelist: [
+  'bg-green-600', 'bg-green-500', 'bg-yellow-500', 'bg-blue-500', 'bg-blue-600', 'bg-gray-400'
+  ]
 }

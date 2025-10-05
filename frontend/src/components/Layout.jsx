@@ -11,6 +11,10 @@ import {
 const Layout = ({ user, children }) => {
   const location = useLocation();
 
+const profilePhotoUrl = user?.profile_photo
+    ? `http://localhost:5000${user.profile_photo}` // adjust base URL to your backend
+    : null;  
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -18,9 +22,17 @@ const Layout = ({ user, children }) => {
         {/* Profile Section */}
         <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-              {user?.username?.charAt(0).toUpperCase()}
-            </div>
+            {profilePhotoUrl ? (
+              <img
+                src={profilePhotoUrl}
+                alt="Profile"
+                className="w-18 h-18 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                {user?.username?.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
               <h3 className="font-semibold text-gray-800">{user?.username}</h3>
               <p className="text-sm text-gray-600">{user?.email}</p>
@@ -81,27 +93,7 @@ const Layout = ({ user, children }) => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navigation Bar */}
-        <nav className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-6">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Task Manager</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Welcome, {user?.username}</span>
-            <button
-              onClick={() => {
-                localStorage.removeItem("token");
-                window.location.href = "/auth";
-              }}
-              className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              <LogOut size={16} />
-              <span>Logout</span>
-            </button>
-          </div>
-        </nav>
-
+      <div className="flex-1 flex flex-col w-full">
         {/* Page Content - FIXED: Remove the wrapper div that limits width */}
         <div className="flex-1 overflow-auto bg-gray-50">
           {children}

@@ -1,207 +1,195 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const Auth = (props) => {
+const Auth = ({ setToken }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [isRegistering, setIsRegistering] = useState(false); // Track if user is registering
-  const navigate = useNavigate();
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  // NEW: Contact fields state
   const [contactInfo, setContactInfo] = useState({
     github_url: "",
     phone: "",
     show_github: true,
     show_email: true,
-    show_phone: false
+    show_phone: false,
   });
 
-  const handleRegister = async () => {
-    try {
-      // Include contact info in registration data
-      const registrationData = {
-        username,
-        email,
-        password,
-        ...contactInfo
-      };
+  const navigate = useNavigate();
 
+  const handleContactChange = (field, value) => {
+    setContactInfo((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleRegister = async () => {
+    if (!username || !email || !password) {
+      setMessage("Please fill all required fields.");
+      return;
+    }
+
+    try {
+      const registrationData = { username, email, password, ...contactInfo };
       const res = await axios.post("/api/auth/register", registrationData);
-      localStorage.setItem("token", res.data.token);
-      props.setToken(res.data.token);
-      navigate("/dashboard", { 
-        state: { 
-          flashMessage: `Registration successful! Welcome, ${res.data.user.username}` 
-        } 
+
+      const token = res.data.token;
+      localStorage.setItem("token", token);
+      setToken(token);
+
+      navigate("/dashboard", {
+        state: { flashMessage: `Registration successful! Welcome, ${res.data.user.username}` },
       });
     } catch (err) {
-      console.error("Registration error:", err);
-      console.error("Error response:", err.response);
-      setMessage(err.response?.data?.message || err.message || "Registration failed");
+      console.error("Registration error:", err.response || err.message);
+      setMessage(err.response?.data?.message || "Registration failed");
     }
   };
 
   const handleLogin = async () => {
+    if (!username || !email || !password) {
+      setMessage("Please fill all required fields.");
+      return;
+    }
+
     try {
-      const res = await axios.post("/api/auth/login", { email, password });
-      localStorage.setItem("token", res.data.token);
-      props.setToken(res.data.token);
-      navigate("/dashboard", { 
-        state: { 
-          flashMessage: `Login successful! Welcome, ${res.data.user.username}` 
-        } 
+      const res = await axios.post("/api/auth/login", { username, email, password });
+
+      const token = res.data.token;
+      localStorage.setItem("token", token);
+      setToken(token);
+
+      navigate("/dashboard", {
+        state: { flashMessage: `Login successful! Welcome, ${res.data.user.username}` },
       });
     } catch (err) {
-      console.error("Login error:", err);
-      console.error("Error response:", err.response);
-      setMessage(err.response?.data?.message || err.message || "Login failed");
+      console.error("Login error:", err.response || err.message);
+      setMessage(err.response?.data?.message || "Login failed");
     }
   };
 
-  // NEW: Toggle between login and register views
   const toggleAuthMode = () => {
     setIsRegistering(!isRegistering);
-    setMessage(""); // Clear any previous messages
-  };
-
-  // NEW: Update contact info
-  const handleContactChange = (field, value) => {
-    setContactInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setMessage("");
   };
 
   return (
-    <div className="p-6 flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-4">
-        {isRegistering ? "Create Account" : "Login"}
-      </h1>
-      
-      <form onSubmit={(e) => e.preventDefault()} className="flex flex-col items-center gap-2 w-80">
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="p-2 border rounded w-full"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="p-2 border rounded w-full"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="p-2 border rounded w-full"
-        />
-
-        {/* NEW: Contact Information Fields (Only show during registration) */}
-        {isRegistering && (
-          <div className="w-full border-t pt-4 mt-2 space-y-3">
-            <h3 className="font-semibold text-gray-700">Contact Information (Optional)</h3>
-            
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">GitHub URL</label>
-              <input
-                type="url"
-                placeholder="https://github.com/yourusername"
-                value={contactInfo.github_url}
-                onChange={(e) => handleContactChange('github_url', e.target.value)}
-                className="p-2 border rounded w-full text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">Phone Number</label>
-              <input
-                type="tel"
-                placeholder="+1234567890"
-                value={contactInfo.phone}
-                onChange={(e) => handleContactChange('phone', e.target.value)}
-                className="p-2 border rounded w-full text-sm"
-              />
-            </div>
-
-            <div className="space-y-2 text-sm">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={contactInfo.show_github}
-                  onChange={(e) => handleContactChange('show_github', e.target.checked)}
-                  className="mr-2"
-                />
-                Show GitHub to team members
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={contactInfo.show_email}
-                  onChange={(e) => handleContactChange('show_email', e.target.checked)}
-                  className="mr-2"
-                />
-                Show email to team members
-              </label>
-              
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={contactInfo.show_phone}
-                  onChange={(e) => handleContactChange('show_phone', e.target.checked)}
-                  className="mr-2"
-                />
-                Show phone to team members
-              </label>
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-2 mt-4">
-          {isRegistering ? (
-            <button
-              type="button"
-              onClick={handleRegister}
-              className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              Register
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleLogin}
-              className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Login
-            </button>
-          )}
+    <div className="min-h-screen flex items-start justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4 pt-16">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white shadow-xl rounded-2xl p-10 w-full max-w-md border border-gray-200 min-h-[480px]"
+      >
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Collab Forge</h1>
+          <p className="text-gray-500 mt-1 text-sm italic">“Collaborate smarter. Forge together.”</p>
         </div>
 
-        {/* NEW: Toggle between login and register */}
-        <button
-          type="button"
-          onClick={toggleAuthMode}
-          className="mt-2 text-sm text-blue-500 hover:text-blue-700"
-        >
-          {isRegistering 
-            ? "Already have an account? Login" 
-            : "Don't have an account? Register"}
-        </button>
-      </form>
+        <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
+          {/* Username always visible */}
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
+          />
 
-      {message && (
-        <p className="mt-4 p-2 bg-gray-100 rounded w-80 text-left break-words">
-          {message}
-        </p>
-      )}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
+          />
+
+          {isRegistering && (
+            <div className="space-y-3 pt-4 border-t mt-2">
+              <h3 className="font-semibold text-gray-700 text-sm">Contact Information (Optional)</h3>
+
+              <input
+                type="url"
+                placeholder="GitHub URL"
+                value={contactInfo.github_url}
+                onChange={(e) => handleContactChange("github_url", e.target.value)}
+                className="p-2 border rounded w-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
+              />
+
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={contactInfo.phone}
+                onChange={(e) => handleContactChange("phone", e.target.value)}
+                className="p-2 border rounded w-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
+              />
+
+              <div className="space-y-1 text-sm">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={contactInfo.show_github}
+                    onChange={(e) => handleContactChange("show_github", e.target.checked)}
+                    className="mr-2"
+                  />
+                  Show GitHub to team members
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={contactInfo.show_email}
+                    onChange={(e) => handleContactChange("show_email", e.target.checked)}
+                    className="mr-2"
+                  />
+                  Show email to team members
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={contactInfo.show_phone}
+                    onChange={(e) => handleContactChange("show_phone", e.target.checked)}
+                    className="mr-2"
+                  />
+                  Show phone to team members
+                </label>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={isRegistering ? handleRegister : handleLogin}
+            className={`w-full py-3 mt-4 rounded-lg text-white font-medium transition-colors duration-200 ${
+              isRegistering ? "bg-green-500 hover:bg-green-600" : "bg-purple-500 hover:bg-purple-600"
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400`}
+          >
+            {isRegistering ? "Register" : "Login"}
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleAuthMode}
+            className="w-full mt-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            {isRegistering ? "Already have an account? Login" : "Don't have an account? Register"}
+          </button>
+        </form>
+
+        {message && (
+          <p className="mt-4 p-3 bg-red-50 text-red-700 rounded text-sm">{message}</p>
+        )}
+      </motion.div>
     </div>
   );
 };
