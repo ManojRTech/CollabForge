@@ -16,7 +16,7 @@ const TaskChat = () => {
   const [error, setError] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
 
-  const [showContacts, setShowContacts] = useState(false); // Added this line
+  const [showContacts, setShowContacts] = useState(false);
 
   // WebSocket connection
   useEffect(() => {
@@ -56,7 +56,7 @@ const TaskChat = () => {
           return;
         }
 
-        // Get current user from token or API
+        // Get current user from token
         const userRes = await axios.get("/api/user/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -124,14 +124,13 @@ const TaskChat = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-        {/* Header - ADDED TEAM CONTACTS BUTTON HERE */}
         <div className="p-4 border-b bg-blue-600 text-white rounded-t-lg">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">{task?.title}</h1>
               <p className="text-blue-100">{task?.description}</p>
             </div>
-            <div className="flex gap-2"> {/* Added flex container for buttons */}
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowContacts(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white transition-colors"
@@ -199,7 +198,6 @@ const TaskChat = () => {
           </div>
         </form>
 
-        {/* ADDED TEAM CONTACTS MODAL AT THE BOTTOM */}
         <TeamContactsModal
           taskId={taskId}
           isOpen={showContacts}

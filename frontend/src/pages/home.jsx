@@ -5,16 +5,6 @@ const Home = () => {
   const [response, setResponse] = useState("");
   const navigate = useNavigate();
 
-  const callBackend = async () => {
-    try {
-      const res = await fetch("/api/test"); // backend test endpoint
-      const data = await res.json();
-      setResponse(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResponse("Error: " + err.message);
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Hero Section */}

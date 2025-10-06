@@ -1,9 +1,8 @@
 import { Server } from 'socket.io';
 import { createServer } from 'http';
-
 import pool from "./config/db.js";
 import dotenv from "dotenv";
-dotenv.config(); // load .env
+dotenv.config(); 
 import path from "path";
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
@@ -25,11 +24,6 @@ const io = new Server(server, {
 // Middleware (helps parse JSON requests later)
 app.use(express.json());
 
-// Test Route
-app.get("/api/test", (req, res) => {
-  res.json({ message: "Backend is running" });
-});
-
 // Auth routes
 app.use("/api/auth", authRoutes);
 
@@ -39,20 +33,14 @@ app.use("/api/tasks", taskRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-
-// Start the server
-// server.listen(PORT, () => {
-//   console.log(`🚀 Backend server running at http://localhost:${PORT}`);
-// });
-
 // WebSocket Connection Handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  // console.log('User connected:', socket.id);
 
   // Join a specific task room
   socket.on('join-task', (taskId) => {
     socket.join(`task-${taskId}`);
-    console.log(`User ${socket.id} joined task-${taskId}`);
+    // console.log(`User ${socket.id} joined task-${taskId}`);
   });
 
   // Handle sending messages
@@ -60,7 +48,7 @@ io.on('connection', (socket) => {
     try {
       const { taskId, message, userId } = data;
       
-      console.log('Received message:', data);
+      // console.log('Received message:', data);
 
       // Save message to database
       const result = await pool.query(
@@ -81,7 +69,7 @@ io.on('connection', (socket) => {
         username: userResult.rows[0].username
       };
 
-      console.log('Saved message to DB:', messageWithUser);
+      // console.log('Saved message to DB:', messageWithUser);
 
       // Broadcast to everyone in the task room
       io.to(`task-${taskId}`).emit('new-message', messageWithUser);
@@ -93,11 +81,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    // console.log('User disconnected:', socket.id);
   });
 });
 
-// Make sure you're using server.listen() not app.listen()
 server.listen(5000, () => {
   console.log('Server running on port 5000 with WebSocket support');
 });

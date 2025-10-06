@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import Home from "./pages/Home";
+import Home from "./pages/home";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./pages/Navbar";
 import TaskChat from "./pages/TaskChat";
 import Layout from "./components/Layout";
 import CreateTask from "./pages/CreateTask";
-import Requests from "./pages/Requests";
 import ProfileSection from "./pages/ProfileSection";
+import RequestSection from "./pages/RequestSection";
 
 const PrivateRoute = ({ children, token }) => {
   return token ? children : <Navigate to="/auth" />;
@@ -76,7 +76,6 @@ function App() {
           </PrivateRoute>
         } />
 
-        {/* ADD THIS MISSING ROUTE FOR EDITING */}
         <Route path="/create-task/:id" element={
           <PrivateRoute token={token}>
             <Layout user={user}>
@@ -88,7 +87,7 @@ function App() {
         <Route path="/requests" element={
           <PrivateRoute token={token}>
             <Layout user={user}>
-              <Requests />
+              <RequestSection user={user} />
             </Layout>
           </PrivateRoute>
         } />

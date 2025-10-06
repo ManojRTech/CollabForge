@@ -124,13 +124,10 @@ const Dashboard = () => {
   if (!user) return <p className="p-6 text-center">Loading user data...</p>;
 
   return (
-    <div className="w-full !min-w-full px-6 mx-auto"> {/* REMOVED max-width constraint */}
-      {/* Centered Header with Stats */}
+    <div className="w-full !min-w-full px-6 mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
         <p className="text-gray-600 mb-6">Welcome back, {user.username}! Here's your Project overview.</p>
-
-        {/* Task Stats - Centered and side by side */}
         <div className="flex flex-col md:flex-row justify-center gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 w-full max-w-md">
             <div className="flex items-center justify-between">
@@ -165,8 +162,7 @@ const Dashboard = () => {
           {message}
         </div>
       )}
-
-      {/* Task Section */}
+      
       <TaskSection
         filterCategory={filterCategory}
         setFilterCategory={setFilterCategory}

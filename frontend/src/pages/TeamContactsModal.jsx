@@ -1,4 +1,3 @@
-// components/TeamContactsModal.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -77,7 +76,6 @@ const TeamContactsModal = ({ taskId, isOpen, onClose }) => {
                 </div>
                 
                 <div className="space-y-2">
-                  {/* GitHub */}
                   {member.github_url && member.show_github && (
                     <button
                       onClick={() => handleContactAction('github', member.github_url, member.username)}
@@ -89,7 +87,6 @@ const TeamContactsModal = ({ taskId, isOpen, onClose }) => {
                     </button>
                   )}
 
-                  {/* Email */}
                   {member.email && member.show_email && (
                     <button
                       onClick={() => handleContactAction('email', member.email, member.username)}
@@ -101,7 +98,6 @@ const TeamContactsModal = ({ taskId, isOpen, onClose }) => {
                     </button>
                   )}
 
-                  {/* Phone */}
                   {member.phone && member.show_phone && (
                     <button
                       onClick={() => handleContactAction('phone', member.phone, member.username)}
@@ -113,7 +109,6 @@ const TeamContactsModal = ({ taskId, isOpen, onClose }) => {
                     </button>
                   )}
 
-                  {/* LinkedIn */}
                   {member.linkedin_url && (
                     <button
                       onClick={() => handleContactAction('linkedin', member.linkedin_url, member.username)}

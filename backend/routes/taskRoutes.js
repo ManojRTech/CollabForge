@@ -4,7 +4,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Create a new task - UPDATED to auto-add creator as member
+// Create a new task
 router.post("/", authMiddleware, async (req, res) => {
   const { title, description, deadline, category, progress } = req.body;
 
@@ -67,7 +67,6 @@ router.post("/:id/accept", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /tasks/:id/request
 router.post("/:id/request", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
   const userId = req.user.id;
@@ -104,8 +103,6 @@ router.post("/:id/request", authMiddleware, async (req, res) => {
   }
 });
 
-
-// POST /tasks/:id/approve
 router.post("/:id/approve", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
   const { userId } = req.body; // requester ID
@@ -155,7 +152,6 @@ router.post("/:id/approve", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /tasks/:id/reject
 router.post("/:id/reject", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
   const { userId } = req.body;
@@ -244,7 +240,6 @@ router.get("/user/requests", authMiddleware, async (req, res) => {
 });
 
 // Get a single task
-// Get a single task - UPDATED to allow task members
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
@@ -269,7 +264,6 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// routes/tasks.js
 router.get('/:id/team-contacts', authMiddleware, async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -316,7 +310,7 @@ router.get('/:id/team-contacts', authMiddleware, async (req, res) => {
   }
 });
 
-// Update a task (all fields)
+// Update a task 
 router.put("/:id", authMiddleware, async (req, res) => {
   const { title, description, category, deadline, status, progress } = req.body;
 
@@ -339,7 +333,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// PATCH /api/tasks/:id/status - UPDATED to allow task members
 router.patch("/:id/status", authMiddleware, async (req, res) => {
   const { status } = req.body;
   const taskId = req.params.id;
@@ -387,7 +380,6 @@ router.patch("/:id/status", authMiddleware, async (req, res) => {
   }
 });
 
-// In your tasks routes - Add this route
 router.patch("/:id/progress", authMiddleware, async (req, res) => {
   const { progress } = req.body;
   const taskId = req.params.id;
@@ -436,7 +428,6 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /tasks/:id/request
 router.post("/:id/request", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
   const userId = req.user.id;
@@ -481,7 +472,7 @@ router.post("/:id/request", authMiddleware, async (req, res) => {
   }
 });
 
-// GET all members for a task - UPDATED to return usernames
+// GET all members for a task 
 router.get("/:id/members", authMiddleware, async (req, res) => {
   const taskId = req.params.id;
 
@@ -515,8 +506,7 @@ router.get("/:id/members", authMiddleware, async (req, res) => {
   }
 });
 
-
-// GET /api/tasks/user/memberships - Get all tasks where user is a member
+//Get all tasks where user is a member
 router.get("/user/memberships", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
@@ -598,7 +588,6 @@ router.post("/:id/messages", authMiddleware, async (req, res) => {
   }
 });
 
-// In your tasks routes
 router.patch("/:id/progress", authMiddleware, async (req, res) => {
   const { progress } = req.body;
   const taskId = req.params.id;

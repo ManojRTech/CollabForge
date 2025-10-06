@@ -5,14 +5,15 @@ import {
   PlusCircle, 
   Mail, 
   User, 
-  LogOut 
+  LogOut,
+  Home as HomeIcon   
 } from 'lucide-react';
 
 const Layout = ({ user, children }) => {
   const location = useLocation();
 
 const profilePhotoUrl = user?.profile_photo
-    ? `http://localhost:5000${user.profile_photo}` // adjust base URL to your backend
+    ? `http://localhost:5000${user.profile_photo}`
     : null;  
 
   return (
@@ -42,6 +43,18 @@ const profilePhotoUrl = user?.profile_photo
 
         {/* Navigation Links */}
         <nav className="p-4 space-y-1">
+          <Link
+            to="/"
+            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              location.pathname === '/' 
+                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <HomeIcon size={20} />
+            <span className="font-medium">Home</span>
+          </Link>
+
           <Link
             to="/dashboard"
             className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
@@ -94,7 +107,6 @@ const profilePhotoUrl = user?.profile_photo
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col w-full">
-        {/* Page Content - FIXED: Remove the wrapper div that limits width */}
         <div className="flex-1 overflow-auto bg-gray-50">
           {children}
         </div>

@@ -50,7 +50,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 
-// Update profile (including optional profile photo)
+// Update profile
 router.put(
   "/me",
   authMiddleware,
@@ -107,7 +107,6 @@ router.put(
 
 router.put("/me", authMiddleware, upload.single("profilePhoto"), updateProfile);
 
-// routes/userRoutes.js
 router.patch('/contact-settings', authMiddleware, async (req, res) => {
   try {
     const { github_url, phone, show_github, show_email, show_phone } = req.body;

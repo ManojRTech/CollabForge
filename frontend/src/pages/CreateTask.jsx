@@ -14,7 +14,7 @@ const CreateTask = () => {
   });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const { id } = useParams(); // ⬅️ get :id if editing
+  const { id } = useParams(); // get :id if editing
 
   // If editing, fetch existing task
   useEffect(() => {
@@ -26,7 +26,6 @@ const CreateTask = () => {
             headers: { Authorization: `Bearer ${token}` }
           });
 
-          // Ensure deadline is formatted properly for <input type="date" />
           const formattedTask = {
             ...res.data.task,
             deadline: res.data.task.deadline
@@ -46,15 +45,13 @@ const CreateTask = () => {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem("token");
-
-      // Ensure progress is properly handled
+      // Ensure progress is between 0 and 100, and set to 100 if status is completed
       const taskToSave = {
         ...newTask,
         progress: newTask.status === "completed" ? 100 : Math.max(0, Math.min(100, newTask.progress || 0))
       };
 
       if (id) {
-        // Update task - make sure progress is included
         await axios.put(`/api/tasks/${id}`, taskToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });

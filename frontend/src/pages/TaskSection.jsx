@@ -29,7 +29,7 @@ const TaskSection = ({
   const [userRequests, setUserRequests] = useState({});
   const navigate = useNavigate(); 
 
-  // Fetch user's task memberships AND requests
+  // Fetch user's task memberships and requests
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -66,7 +66,6 @@ const TaskSection = ({
   }, []);
 
   // Get progress for a task
-  // Fix this duplicate function - remove one of them
   const getTaskProgress = (task) => {
     if (task.status === "completed") return 100;
     if (task.status === "open") return 0;

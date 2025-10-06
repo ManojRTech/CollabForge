@@ -1,4 +1,3 @@
-// backend/routes/authRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -8,7 +7,6 @@ import authMiddleware from "../middleware/authMiddleware.js";
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Register
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -50,7 +48,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
