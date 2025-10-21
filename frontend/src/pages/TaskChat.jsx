@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { io } from "socket.io-client";
 import TeamContactsModal from "./TeamContactsModal";
+import API from "../api";
 
 const TaskChat = () => {
   const [socket, setSocket] = useState(null);
@@ -57,17 +58,17 @@ const TaskChat = () => {
         }
 
         // Get current user from token
-        const userRes = await axios.get("/api/user/me", {
+        const userRes = await API.get("/api/user/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCurrentUser(userRes.data.user);
 
         // Fetch task details and members
         const [taskRes, membersRes] = await Promise.all([
-          axios.get(`/api/tasks/${taskId}`, {
+          API.get(`/api/tasks/${taskId}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get(`/api/tasks/${taskId}/members`, {
+          API.get(`/api/tasks/${taskId}/members`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -96,7 +97,7 @@ const TaskChat = () => {
   const fetchMessages = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`/api/tasks/${taskId}/messages`, {
+      const res = await API.get(`/api/tasks/${taskId}/messages`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessages(res.data.messages || []);

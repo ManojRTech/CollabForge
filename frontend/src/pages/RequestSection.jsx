@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import API from "../api";
 
 const RequestSection = ({ user }) => {
   const [incomingRequests, setIncomingRequests] = useState([]);
@@ -15,13 +16,13 @@ const RequestSection = ({ user }) => {
         const token = localStorage.getItem("token");
         
         // Fetch incoming requests 
-        const incomingRes = await axios.get("/api/tasks/my-requests", {
+        const incomingRes = await API.get("/api/tasks/my-requests", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setIncomingRequests(incomingRes.data.requests);
 
         // Fetch outgoing requests 
-        const outgoingRes = await axios.get("/api/tasks/user/requests", {
+        const outgoingRes = await API.get("/api/tasks/user/requests", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOutgoingRequests(outgoingRes.data.requests);
@@ -37,14 +38,14 @@ const RequestSection = ({ user }) => {
   const handleAction = async (taskId, action, userId) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(`/api/tasks/${taskId}/${action}`, { userId }, {
+      const res = await API.post(`/api/tasks/${taskId}/${action}`, { userId }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
       // Refresh both incoming and outgoing requests
     const [incomingRes, outgoingRes] = await Promise.all([
-      axios.get("/api/tasks/my-requests", { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get("/api/tasks/user/requests", { headers: { Authorization: `Bearer ${token}` } })
+      API.get("/api/tasks/my-requests", { headers: { Authorization: `Bearer ${token}` } }),
+      API.get("/api/tasks/user/requests", { headers: { Authorization: `Bearer ${token}` } })
     ]);
 
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { progress } from "framer-motion";
+import API from "../api";
 
 const CreateTask = () => {
   const [newTask, setNewTask] = useState({ 
@@ -22,7 +23,7 @@ const CreateTask = () => {
       const fetchTask = async () => {
         try {
           const token = localStorage.getItem("token");
-          const res = await axios.get(`/api/tasks/${id}`, {
+          const res = await API.get(`/api/tasks/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
 
@@ -58,7 +59,7 @@ const CreateTask = () => {
         setMessage("Project updated successfully!");
       } else {
         // Create new task
-        await axios.post("/api/tasks", taskToSave, {
+        await API.post("/api/tasks", taskToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMessage("Project created successfully!");

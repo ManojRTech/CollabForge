@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 const Home = () => {
   const [response, setResponse] = useState("");
   const navigate = useNavigate();

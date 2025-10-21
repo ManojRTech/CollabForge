@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import API from "../api";
 
 const ProfileSection = () => {
   const [user, setUser] = useState(null);
@@ -38,7 +39,7 @@ const ProfileSection = () => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("/api/user/me", {
+        const res = await API.get("/api/user/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -107,7 +108,7 @@ const ProfileSection = () => {
   const handleSaveContactInfo = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.patch("/api/user/contact-settings", contactInfo, {
+      const res = await API.patch("/api/user/contact-settings", contactInfo, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

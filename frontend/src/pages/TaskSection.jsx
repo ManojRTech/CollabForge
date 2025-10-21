@@ -12,6 +12,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
+import API from "../api";
 
 const TaskSection = ({
   filterCategory, setFilterCategory,
@@ -36,7 +37,7 @@ const TaskSection = ({
         const token = localStorage.getItem("token");
         
         // Fetch memberships
-        const membershipsRes = await axios.get("/api/tasks/user/memberships", {
+        const membershipsRes = await API.get("/api/tasks/user/memberships", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -47,7 +48,7 @@ const TaskSection = ({
         setUserTaskMemberships(memberships);
 
         // Fetch user's requests
-        const requestsRes = await axios.get("/api/tasks/user/requests", {
+        const requestsRes = await API.get("/api/tasks/user/requests", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -93,7 +94,7 @@ const TaskSection = ({
   const handleStartTask = async (taskId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.patch(`/api/tasks/${taskId}/status`, 
+      await API.patch(`/api/tasks/${taskId}/status`, 
         { status: "in-progress" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -139,7 +140,7 @@ const TaskSection = ({
   const handleProgressUpdate = async (taskId, newProgress) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.patch(`/api/tasks/${taskId}/progress`, 
+      await API.patch(`/api/tasks/${taskId}/progress`, 
         { progress: newProgress },
         { headers: { Authorization: `Bearer ${token}` } }
       );

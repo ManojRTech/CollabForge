@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import TaskSection from "./TaskSection";
+import API from "../api";
 
 const Dashboard = () => {
   const location = useLocation();
@@ -35,10 +36,10 @@ const Dashboard = () => {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("No token found");
 
-        const userRes = await axios.get("/api/user/me", { headers: { Authorization: `Bearer ${token}` } });
+        const userRes = await API.get("/api/user/me", { headers: { Authorization: `Bearer ${token}` } });
         setUser(userRes.data.user);
 
-        const taskRes = await axios.get("/api/tasks", { headers: { Authorization: `Bearer ${token}` } });
+        const taskRes = await API.get("/api/tasks", { headers: { Authorization: `Bearer ${token}` } });
         setTasks(taskRes.data.tasks);
         
       } catch (err) {
@@ -60,7 +61,7 @@ const Dashboard = () => {
   const handleDeleteTask = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`/api/tasks/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await API.delete(`/api/tasks/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setTasks(tasks.filter((t) => t.id !== id));
       setMessage("Project deleted successfully!");
     } catch (err) { setMessage("Error deleting task"); }
@@ -69,7 +70,7 @@ const Dashboard = () => {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.patch(`/api/tasks/${id}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await API.patch(`/api/tasks/${id}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
       setTasks(prev => prev.map(task => task.id === id ? { ...task, status: res.data.task.status } : task));
     } catch (err) { setMessage("Error updating status"); setTimeout(() => setMessage(""), 3000); }
   };
@@ -95,7 +96,7 @@ const Dashboard = () => {
   const handleRequestTask = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(`/api/tasks/${id}/request`, {}, {
+      const res = await API.post(`/api/tasks/${id}/request`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessage(res.data.message);

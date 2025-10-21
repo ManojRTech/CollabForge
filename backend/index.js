@@ -19,7 +19,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",                      // for local dev
-      "https://collabforge-frontend.vercel.app"     // your deployed frontend
+      "https://collab-forge.vercel.app/"     // your deployed frontend
     ],
     methods: ["GET", "POST"],
     credentials: true

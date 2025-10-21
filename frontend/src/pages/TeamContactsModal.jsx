@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API from "../api";
 
 const TeamContactsModal = ({ taskId, isOpen, onClose }) => {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -15,7 +16,7 @@ const TeamContactsModal = ({ taskId, isOpen, onClose }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/tasks/${taskId}/team-contacts`, {
+      const response = await API.get(`/api/tasks/${taskId}/team-contacts`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTeamMembers(response.data.teamMembers);
