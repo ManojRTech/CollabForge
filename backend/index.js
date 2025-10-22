@@ -2,7 +2,9 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import pool from "./config/db.js";
 import dotenv from "dotenv";
-dotenv.config(); 
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config(); 
+}
 import path from "path";
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
