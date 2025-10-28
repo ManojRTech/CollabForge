@@ -17,7 +17,7 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:5173",                      // for local dev
+      // "http://localhost:5173",                      // for local dev
       "https://collab-forge.vercel.app/"     // your deployed frontend
     ],
     methods: ["GET", "POST"],
@@ -91,6 +91,5 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`✅ Health check: http://0.0.0.0:${PORT}/api/health`);
 });
