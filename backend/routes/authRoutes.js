@@ -5,7 +5,7 @@ import pool from "../config/db.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const JWT_SECRET = 123;
+const JWT_SECRET = "123";
 
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
@@ -32,7 +32,7 @@ router.post("/register", async (req, res) => {
     );
 
     // Create token
-    const token = jwt.sign({ id: newUser.rows[0].id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: newUser.rows[0].id }, JWT_SECRET, {
       expiresIn: "1h",
     });
 
@@ -68,7 +68,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Create token
-    const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user.rows[0].id }, JWT_SECRET, {
       expiresIn: "1h",
     });
 
