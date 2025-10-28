@@ -5,7 +5,7 @@ import pool from "../config/db.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = 123;
 
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;

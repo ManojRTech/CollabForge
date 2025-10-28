@@ -120,9 +120,9 @@ const allowedOrigins = [
 
 // ✅ Enable CORS for Express APIs
 app.use(cors({
-  origin: allowedOrigins,
+  origin: ["https://collab-forge.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  credentials: true,
 }));
 
 // ✅ Middleware
