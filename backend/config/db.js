@@ -18,25 +18,27 @@ if (process.env.DATABASE_URL) {
 
 let pool;
 
-if (process.env.DATABASE_URL) {
-  console.log("DB_MODE: RENDER_URL");
-  // Render or external PostgreSQL (needs SSL)
+// if (process.env.DATABASE_URL) {
+//   console.log("DB_MODE: RENDER_URL");
+//   // Render or external PostgreSQL (needs SSL)
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: process.env.DATABASE_URL, 
+    ssl: {
+      rejectUnauthorized: false,
+    }
   });
-} else {
-  console.log("DB_MODE: LOCAL_VARS");
-  // Local PostgreSQL (no SSL)
-  pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: Number(process.env.DB_PORT),
-    ssl: false, // ✅ Disable SSL for local
-  });
-}
+// } else {
+//   console.log("DB_MODE: LOCAL_VARS");
+//   // Local PostgreSQL (no SSL)
+//   pool = new Pool({
+//     user: process.env.DB_USER,
+//     host: process.env.DB_HOST,
+//     database: process.env.DB_NAME,
+//     password: process.env.DB_PASSWORD,
+//     port: Number(process.env.DB_PORT),
+//     ssl: false, // ✅ Disable SSL for local
+//   });
+// }
 
 pool.connect()
   .then(client => {
