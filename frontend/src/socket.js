@@ -1,7 +1,7 @@
 // src/socket.js
 import { io } from "socket.io-client";
 
-const SOCKET_URL = process.env.REACT_APP_API_URL;
+const SOCKET_URL = "https://collabforge-server.onrender.com";
 
 const socket = io(SOCKET_URL, {
   withCredentials: true

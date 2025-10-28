@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
-import { progress } from "framer-motion";
 import API from "../api";
 
 const CreateTask = () => {
@@ -53,7 +51,7 @@ const CreateTask = () => {
       };
 
       if (id) {
-        await axios.put(`/api/tasks/${id}`, taskToSave, {
+        await API.put(`/api/tasks/${id}`, taskToSave, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMessage("Project updated successfully!");

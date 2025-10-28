@@ -33,7 +33,7 @@ const Auth = ({ setToken }) => {
 
     try {
       const registrationData = { username, email, password, ...contactInfo };
-      const res = await axios.post("/api/auth/register", registrationData);
+      const res = await API.post("/api/auth/register", registrationData);
 
       const token = res.data.token;
       localStorage.setItem("token", token);
@@ -55,7 +55,7 @@ const Auth = ({ setToken }) => {
     }
 
     try {
-      const res = await axios.post("/api/auth/login", { username, email, password });
+      const res = await API.post("/api/auth/login", { username, email, password });
 
       const token = res.data.token;
       localStorage.setItem("token", token);

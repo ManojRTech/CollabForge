@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import API from "../api";
 
 const ProfileSection = () => {
@@ -91,7 +90,7 @@ const ProfileSection = () => {
       formData.append("interests", interests);
       if (profilePhoto) formData.append("profilePhoto", profilePhoto);
 
-      const res = await axios.put("/api/user/me", formData, {
+      const res = await API.put("/api/user/me", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -143,7 +142,7 @@ const ProfileSection = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.put(
+      const res = await API.put(
         "/api/auth/update-password",
         { oldPassword: currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }

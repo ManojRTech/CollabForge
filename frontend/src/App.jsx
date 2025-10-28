@@ -23,7 +23,7 @@ function App() {
     const fetchUser = async () => {
       if (token) {
         try {
-          const userRes = await fetch("/api/user/me", {
+          const userRes = await fetch("https://collabforge-server.onrender.com/api/user/me", {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (userRes.ok) {

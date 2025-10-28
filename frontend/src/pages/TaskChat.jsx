@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { io } from "socket.io-client";
 import TeamContactsModal from "./TeamContactsModal";
 import API from "../api";

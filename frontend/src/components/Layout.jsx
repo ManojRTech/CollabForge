@@ -12,9 +12,11 @@ import {
 const Layout = ({ user, children }) => {
   const location = useLocation();
 
+const backendURL = "https://collabforge-server.onrender.com";
+
 const profilePhotoUrl = user?.profile_photo
-    ? `http://localhost:5000${user.profile_photo}`
-    : null;  
+  ? `${backendURL}${user.profile_photo}`
+  : null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
