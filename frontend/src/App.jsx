@@ -55,7 +55,7 @@ function App() {
 
   return (
     <Router>
-      <Navbar token={token} onLogout={handleLogout} />
+      <Navbar token={token} onLogout={handleLogout} user={user} setUser={setUser} />
       <Routes>
         <Route
           path="/"

@@ -21,12 +21,12 @@ const Navbar = () => {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
-    navigate("/"); // 
+    navigate("/"); 
   };
 
   return (
     <nav className="p-4 bg-white shadow-sm border-b">
-      <div className="flex justify-between items-center"> {/* REMOVED max-w-7xl mx-auto */}
+      <div className="flex justify-between items-center"> 
         <Link to="/" className="font-bold text-xl text-gray-800">CollabForge</Link>
         <div className="flex gap-4">
           {!token && (
