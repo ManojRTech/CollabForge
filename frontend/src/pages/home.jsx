@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [response, setResponse] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(undefined);
   const navigate = useNavigate();
 
   // Check login status on component mount
@@ -11,6 +11,11 @@ const Home = () => {
     const token = localStorage.getItem("token"); // assuming you store JWT or session token in localStorage
     setIsLoggedIn(!!token);
   }, []);
+
+  // Prevent flicker before token loads
+  if (isLoggedIn === undefined) {
+    return <div className="min-h-screen flex items-center justify-center text-lg">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-blue-50 to-purple-50">

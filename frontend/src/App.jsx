@@ -18,6 +18,15 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(null);
 
+  // Restore token if it exists on refresh
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    if (savedToken && !token) {
+      setToken(savedToken);
+    }
+  }, []);
+
+
   // Fetch user when token changes
   useEffect(() => {
     const fetchUser = async () => {
@@ -48,7 +57,19 @@ function App() {
     <Router>
       <Navbar token={token} onLogout={handleLogout} />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={
+            token ? (
+              <Layout user={user}>
+                <Home />
+              </Layout>
+            ) : (
+              <Home />
+            )
+          }
+        />
+
         <Route path="/auth" element={<Auth setToken={setToken} />} />
         
         {/* Authenticated routes with Layout */}
