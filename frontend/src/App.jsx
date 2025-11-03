@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Home from "./pages/home";
 import Auth from "./pages/Auth";
@@ -17,7 +17,7 @@ const PrivateRoute = ({ children, token }) => {
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(null);
-  const location = useLocation();
+  const location = useLocation(); 
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -26,13 +26,12 @@ function App() {
     }
   }, [location]);
 
-  // Fetch user when token changes
   useEffect(() => {
     const fetchUser = async () => {
       if (token) {
         try {
           const userRes = await fetch("https://collabforge-server.onrender.com/api/user/me", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
           if (userRes.ok) {
             const userData = await userRes.json();
@@ -53,68 +52,80 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            token ? (
-              <Layout user={user}>
-                <Navbar token={token} onLogout={handleLogout} user={user} setUser={setUser} />
-                <Home />
-              </Layout>
-            ) : (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          token ? (
+            <Layout user={user}>
+              <Navbar token={token} onLogout={handleLogout} user={user} setUser={setUser} />
               <Home />
-            )
-          }
-        />
+            </Layout>
+          ) : (
+            <Home />
+          )
+        }
+      />
 
-        <Route path="/auth" element={<Auth setToken={setToken} />} />
-        
-        {/* Authenticated routes with Layout */}
-        <Route path="/dashboard" element={
+      <Route path="/auth" element={<Auth setToken={setToken} />} />
+
+      <Route
+        path="/dashboard"
+        element={
           <PrivateRoute token={token}>
             <Layout user={user}>
               <Dashboard />
             </Layout>
           </PrivateRoute>
-        } />
-        
-        <Route path="/profile" element={
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
           <PrivateRoute token={token}>
             <Layout user={user}>
               <ProfileSection />
             </Layout>
           </PrivateRoute>
-        } />
-        
-        <Route path="/create-task" element={
-          <PrivateRoute token={token}>
-            <Layout user={user}>
-              <CreateTask />
-            </Layout>
-          </PrivateRoute>
-        } />
+        }
+      />
 
-        <Route path="/create-task/:id" element={
+      <Route
+        path="/create-task"
+        element={
           <PrivateRoute token={token}>
             <Layout user={user}>
               <CreateTask />
             </Layout>
           </PrivateRoute>
-        } />
-        
-        <Route path="/requests" element={
+        }
+      />
+
+      <Route
+        path="/create-task/:id"
+        element={
+          <PrivateRoute token={token}>
+            <Layout user={user}>
+              <CreateTask />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/requests"
+        element={
           <PrivateRoute token={token}>
             <Layout user={user}>
               <RequestSection user={user} />
             </Layout>
           </PrivateRoute>
-        } />
-        
-        <Route path="/task/:taskId/chat" element={<TaskChat />} />
-      </Routes>
-    </Router>
+        }
+      />
+
+      <Route path="/task/:taskId/chat" element={<TaskChat />} />
+    </Routes>
   );
 }
 
