@@ -20,7 +20,9 @@ const TaskChat = () => {
 
   // WebSocket connection
   useEffect(() => {
-    const newSocket = io("http://localhost:5000");
+    const newSocket = io("https://collabforge-server.onrender.com", {
+      transports: ["websocket", "polling"],
+    });
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
