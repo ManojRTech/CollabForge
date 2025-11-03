@@ -6,14 +6,16 @@ import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const [token, setToken] = useState(localStorage.getItem("token"));
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setToken(localStorage.getItem("token"));
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
-
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Optional: Sync token only when storage changes (e.g. in other tabs)
+    const handleStorageChange = () => {
+      setToken(localStorage.getItem("token"));
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
