@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -12,10 +13,13 @@ const Navbar = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
-    window.location.href = "/auth";
+    setUser(null);
+    navigate("/"); // 
   };
 
   return (
