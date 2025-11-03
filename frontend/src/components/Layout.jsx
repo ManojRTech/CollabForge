@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Navbar from "../pages/Navbar";
 
-const Layout = ({ user, children }) => {
+const Layout = ({ user, children, token, onLogout, setUser  }) => {
   const location = useLocation();
 
 const backendURL = "https://collabforge-server.onrender.com";
