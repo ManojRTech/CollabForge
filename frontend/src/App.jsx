@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Home from "./pages/home";
 import Auth from "./pages/Auth";
@@ -17,15 +17,14 @@ const PrivateRoute = ({ children, token }) => {
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(null);
+  const location = useLocation();
 
-  // Restore token if it exists on refresh
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
-    if (savedToken && !token) {
+    if (savedToken !== token) {
       setToken(savedToken);
     }
-  }, []);
-
+  }, [location]);
 
   // Fetch user when token changes
   useEffect(() => {
