@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://collabforge-server.onrender.com";
+
+
 const ProfileSection = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,8 +49,7 @@ const ProfileSection = () => {
 
         setUser(userData);
 
-        // If using full URL method:
-        setExistingPhoto(userData.profile_photo ? `http://localhost:5000${userData.profile_photo}` : null);
+        setExistingPhoto(userData.profile_photo ? `${BASE_URL}${userData.profile_photo}` : null);
 
         setUsername(userData.username || "");
         setBio(userData.bio || "");

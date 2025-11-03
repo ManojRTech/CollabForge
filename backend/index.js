@@ -90,7 +90,7 @@
 // });
 
 // server.listen(PORT,  () => {
-//   console.log(`✅ Server running on port ${PORT}`);
+//   console.log(`Server running on port ${PORT}`);
 // });
 
 import express from "express";
@@ -111,46 +111,46 @@ const __dirname = path.resolve();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Allowed origins (your frontend URLs)
+// Allowed origins (your frontend URLs)
 const allowedOrigins = [
   "https://collab-forge.vercel.app",  // Deployed frontend
   "http://localhost:5173",            // Local Vite dev
   "http://localhost:3000"             // Local React dev
 ];
 
-// ✅ Enable CORS for Express APIs
+// Enable CORS for Express APIs
 app.use(cors({
   origin: ["https://collab-forge.vercel.app"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true,
 }));
 
-// ✅ Middleware
+// Middleware
 app.use(express.json());
 
-// ✅ API Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/tasks", taskRoutes);
 
-// ✅ Static folder for profile uploads
+// Static folder for profile uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Create HTTP + WebSocket Server
+// Create HTTP + WebSocket Server
 const server = createServer(app);
 
-// ✅ Setup Socket.IO with same CORS
+// Setup Socket.IO with same CORS
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true
   }
 });
 
-// ✅ WebSocket Connection Events
+// WebSocket Connection Events
 io.on("connection", (socket) => {
-  console.log(`🟢 User connected: ${socket.id}`);
+  console.log(`User connected: ${socket.id}`);
 
   // Join a specific task room
   socket.on("join-task", (taskId) => {
@@ -185,18 +185,18 @@ io.on("connection", (socket) => {
       // Broadcast message to all users in the task room
       io.to(`task-${taskId}`).emit("new-message", messageWithUser);
     } catch (error) {
-      console.error("❌ Error saving message:", error);
+      console.error("Error saving message:", error);
       socket.emit("error", "Failed to send message");
     }
   });
 
   socket.on("disconnect", () => {
-    console.log(`🔴 User disconnected: ${socket.id}`);
+    console.log(`User disconnected: ${socket.id}`);
   });
 });
 
-// ✅ Start the server
+// Start the server
 server.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🌍 Ready for frontend: https://collab-forge.vercel.app`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Ready for frontend: https://collab-forge.vercel.app`);
 });
