@@ -110,13 +110,14 @@ router.put("/me", authMiddleware, upload.single("profilePhoto"), updateProfile);
 router.patch('/contact-settings', authMiddleware, async (req, res) => {
   try {
     const { github_url, phone, show_github, show_email, show_phone } = req.body;
+    const bool = (v) => v === true || v === "true";
     
     const result = await pool.query(
       `UPDATE users 
        SET github_url = $1, phone = $2, show_github = $3, show_email = $4, show_phone = $5
        WHERE id = $6
        RETURNING id, username, email, github_url, phone, show_github, show_email, show_phone`,
-      [github_url, phone, show_github, show_email, show_phone, req.user.id]
+      [github_url, phone, bool(show_github), bool(show_email), bool(show_phone), req.user.id]
     );
 
     res.json({ 
