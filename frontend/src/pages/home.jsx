@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 
 const Home = () => {
   const [response, setResponse] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  // Check login status on component mount
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // assuming you store JWT or session token in localStorage
+    setIsLoggedIn(!!token);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-blue-50 to-purple-50">
@@ -16,20 +22,24 @@ const Home = () => {
         <p className="text-lg md:text-xl text-gray-600 italic mb-8">
           Collaborate smarter. Forge together.
         </p>
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Register
-          </button>
-        </div>
+
+        {/* Show Login/Register only if NOT logged in */}
+        {!isLoggedIn && (
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+            >
+              Register
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Features Section */}
