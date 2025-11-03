@@ -54,13 +54,13 @@ function App() {
 
   return (
     <Router>
-      <Navbar token={token} onLogout={handleLogout} user={user} setUser={setUser} />
       <Routes>
         <Route
           path="/"
           element={
             token ? (
               <Layout user={user}>
+                <Navbar token={token} onLogout={handleLogout} user={user} setUser={setUser} />
                 <Home />
               </Layout>
             ) : (
