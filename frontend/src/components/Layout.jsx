@@ -8,6 +8,7 @@ import {
   LogOut,
   Home as HomeIcon   
 } from 'lucide-react';
+import Navbar from "../pages/Navbar";
 
 const Layout = ({ user, children }) => {
   const location = useLocation();
@@ -109,6 +110,8 @@ const profilePhotoUrl = user?.profile_photo
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col w-full">
+        {/* Navbar */}
+        <Navbar token={token} onLogout={onLogout} user={user} setUser={setUser} />
         <div className="flex-1 overflow-auto bg-gray-50">
           {children}
         </div>

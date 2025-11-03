@@ -57,8 +57,7 @@ function App() {
         path="/"
         element={
           token ? (
-            <Layout user={user}>
-              <Navbar token={token} onLogout={handleLogout} user={user} setUser={setUser} />
+            <Layout user={user} token={token} onLogout={handleLogout} setUser={setUser}>
               <Home />
             </Layout>
           ) : (
@@ -73,7 +72,7 @@ function App() {
         path="/dashboard"
         element={
           <PrivateRoute token={token}>
-            <Layout user={user}>
+            <Layout user={user} token={token} onLogout={handleLogout} setUser={setUser}>
               <Dashboard />
             </Layout>
           </PrivateRoute>
@@ -84,7 +83,7 @@ function App() {
         path="/profile"
         element={
           <PrivateRoute token={token}>
-            <Layout user={user}>
+            <Layout user={user} token={token} onLogout={handleLogout} setUser={setUser}>
               <ProfileSection />
             </Layout>
           </PrivateRoute>
@@ -95,7 +94,7 @@ function App() {
         path="/create-task"
         element={
           <PrivateRoute token={token}>
-            <Layout user={user}>
+            <Layout user={user} token={token} onLogout={handleLogout} setUser={setUser}>
               <CreateTask />
             </Layout>
           </PrivateRoute>
@@ -106,7 +105,7 @@ function App() {
         path="/create-task/:id"
         element={
           <PrivateRoute token={token}>
-            <Layout user={user}>
+            <Layout user={user} token={token} onLogout={handleLogout} setUser={setUser}>
               <CreateTask />
             </Layout>
           </PrivateRoute>
@@ -117,7 +116,7 @@ function App() {
         path="/requests"
         element={
           <PrivateRoute token={token}>
-            <Layout user={user}>
+            <Layout user={user} token={token} onLogout={handleLogout} setUser={setUser}>
               <RequestSection user={user} />
             </Layout>
           </PrivateRoute>
