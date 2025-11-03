@@ -121,10 +121,12 @@ router.post("/:id/approve", authMiddleware, async (req, res) => {
     }
 
     // Check if the user requested this task
+    console.log("Checking request for:", { taskId, userId });
     const requestResult = await pool.query(
       "SELECT * FROM requests WHERE task_id = $1 AND user_id = $2 AND status = 'pending'",
       [taskId, userId]
     );
+    console.log("Found requests:", requestResult.rows);
     if (requestResult.rows.length === 0) {
       return res.status(400).json({ message: "User did not request this task" });
     }
