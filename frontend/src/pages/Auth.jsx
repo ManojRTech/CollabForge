@@ -4,15 +4,18 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Auth = ({ setToken }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ Read mode (login/register) from URL instead of location.state
+  const query = new URLSearchParams(location.search);
+  const mode = query.get("mode");
+
+  const [isRegistering, setIsRegistering] = useState(mode === "register");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const location = useLocation(); 
-
-  const [isRegistering, setIsRegistering] = useState(
-    location.state?.mode === "register"
-  ); 
 
   const [contactInfo, setContactInfo] = useState({
     github_url: "",
@@ -22,14 +25,11 @@ const Auth = ({ setToken }) => {
     show_phone: false,
   });
 
-
-
-  const navigate = useNavigate();
-
   const handleContactChange = (field, value) => {
     setContactInfo((prev) => ({ ...prev, [field]: value }));
   };
 
+  // ✅ Register handler
   const handleRegister = async () => {
     if (!username || !email || !password) {
       setMessage("Please fill all required fields.");
@@ -45,7 +45,9 @@ const Auth = ({ setToken }) => {
       setToken(token);
 
       navigate("/dashboard", {
-        state: { flashMessage: `Registration successful! Welcome, ${res.data.user.username}` },
+        state: {
+          flashMessage: `Registration successful! Welcome, ${res.data.user.username}`,
+        },
       });
     } catch (err) {
       console.error("Registration error:", err.response || err.message);
@@ -53,6 +55,7 @@ const Auth = ({ setToken }) => {
     }
   };
 
+  // ✅ Login handler
   const handleLogin = async () => {
     if (!username || !email || !password) {
       setMessage("Please fill all required fields.");
@@ -67,7 +70,9 @@ const Auth = ({ setToken }) => {
       setToken(token);
 
       navigate("/dashboard", {
-        state: { flashMessage: `Login successful! Welcome, ${res.data.user.username}` },
+        state: {
+          flashMessage: `Login successful! Welcome, ${res.data.user.username}`,
+        },
       });
     } catch (err) {
       console.error("Login error:", err.response || err.message);
@@ -75,9 +80,12 @@ const Auth = ({ setToken }) => {
     }
   };
 
+  // ✅ Toggle between login/register
   const toggleAuthMode = () => {
+    const newMode = isRegistering ? "login" : "register";
     setIsRegistering(!isRegistering);
     setMessage("");
+    navigate(`/auth?mode=${newMode}`, { replace: true });
   };
 
   return (
@@ -90,11 +98,12 @@ const Auth = ({ setToken }) => {
       >
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Collab Forge</h1>
-          <p className="text-gray-500 mt-1 text-sm italic">“Collaborate smarter. Forge together.”</p>
+          <p className="text-gray-500 mt-1 text-sm italic">
+            “Collaborate smarter. Forge together.”
+          </p>
         </div>
 
         <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
-          {/* Username always visible */}
           <input
             type="text"
             placeholder="Username"
@@ -119,9 +128,12 @@ const Auth = ({ setToken }) => {
             className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all duration-200"
           />
 
+          {/* ✅ Only visible during registration */}
           {isRegistering && (
             <div className="space-y-3 pt-4 border-t mt-2">
-              <h3 className="font-semibold text-gray-700 text-sm">Contact Information (Optional)</h3>
+              <h3 className="font-semibold text-gray-700 text-sm">
+                Contact Information (Optional)
+              </h3>
 
               <input
                 type="url"
@@ -144,7 +156,9 @@ const Auth = ({ setToken }) => {
                   <input
                     type="checkbox"
                     checked={contactInfo.show_github}
-                    onChange={(e) => handleContactChange("show_github", e.target.checked)}
+                    onChange={(e) =>
+                      handleContactChange("show_github", e.target.checked)
+                    }
                     className="mr-2"
                   />
                   Show GitHub to team members
@@ -154,7 +168,9 @@ const Auth = ({ setToken }) => {
                   <input
                     type="checkbox"
                     checked={contactInfo.show_email}
-                    onChange={(e) => handleContactChange("show_email", e.target.checked)}
+                    onChange={(e) =>
+                      handleContactChange("show_email", e.target.checked)
+                    }
                     className="mr-2"
                   />
                   Show email to team members
@@ -164,7 +180,9 @@ const Auth = ({ setToken }) => {
                   <input
                     type="checkbox"
                     checked={contactInfo.show_phone}
-                    onChange={(e) => handleContactChange("show_phone", e.target.checked)}
+                    onChange={(e) =>
+                      handleContactChange("show_phone", e.target.checked)
+                    }
                     className="mr-2"
                   />
                   Show phone to team members
@@ -177,7 +195,9 @@ const Auth = ({ setToken }) => {
             type="button"
             onClick={isRegistering ? handleRegister : handleLogin}
             className={`w-full py-3 mt-4 rounded-lg text-white font-medium transition-colors duration-200 ${
-              isRegistering ? "bg-green-500 hover:bg-green-600" : "bg-purple-500 hover:bg-purple-600"
+              isRegistering
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-purple-500 hover:bg-purple-600"
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400`}
           >
             {isRegistering ? "Register" : "Login"}
@@ -188,12 +208,16 @@ const Auth = ({ setToken }) => {
             onClick={toggleAuthMode}
             className="w-full mt-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >
-            {isRegistering ? "Already have an account? Login" : "Don't have an account? Register"}
+            {isRegistering
+              ? "Already have an account? Login"
+              : "Don't have an account? Register"}
           </button>
         </form>
 
         {message && (
-          <p className="mt-4 p-3 bg-red-50 text-red-700 rounded text-sm">{message}</p>
+          <p className="mt-4 p-3 bg-red-50 text-red-700 rounded text-sm">
+            {message}
+          </p>
         )}
       </motion.div>
     </div>

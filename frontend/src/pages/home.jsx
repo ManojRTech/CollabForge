@@ -32,13 +32,13 @@ const Home = () => {
         {!isLoggedIn && (
           <div className="flex gap-4">
             <button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=login")}
               className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
             >
               Login
             </button>
             <button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=register")}
               className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
             >
               Register
