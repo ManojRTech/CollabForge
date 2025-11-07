@@ -1,6 +1,6 @@
 import { useState } from "react";
 import API from "../api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Auth = ({ setToken }) => {
@@ -8,8 +8,12 @@ const Auth = ({ setToken }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [isRegistering, setIsRegistering] = useState(false);
-  
+
+  const [isRegistering, setIsRegistering] = useState(
+    location.state?.mode === "register"
+  );
+
+  const location = useLocation();  
 
   const [contactInfo, setContactInfo] = useState({
     github_url: "",
@@ -18,6 +22,8 @@ const Auth = ({ setToken }) => {
     show_email: false,
     show_phone: false,
   });
+
+
 
   const navigate = useNavigate();
 
