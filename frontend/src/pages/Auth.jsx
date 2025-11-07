@@ -8,12 +8,11 @@ const Auth = ({ setToken }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const location = useLocation(); 
 
   const [isRegistering, setIsRegistering] = useState(
     location.state?.mode === "register"
-  );
-
-  const location = useLocation();  
+  ); 
 
   const [contactInfo, setContactInfo] = useState({
     github_url: "",
