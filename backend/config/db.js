@@ -15,6 +15,7 @@ const { Pool } = pkg;
       rejectUnauthorized: false,
     }
   });
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 // } else {
 //   console.log("DB_MODE: LOCAL_VARS");
 //   // Local PostgreSQL (no SSL)
