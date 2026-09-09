@@ -20,7 +20,7 @@ const TaskChat = () => {
 
   // WebSocket connection
   useEffect(() => {
-    const newSocket = io("https://collabforge-server.onrender.com", {
+    const newSocket = io(import.meta.env.VITE_API_BASE_URL, {
       transports: ["websocket", "polling"],
     });
     setSocket(newSocket);

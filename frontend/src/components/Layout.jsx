@@ -13,7 +13,7 @@ import Navbar from "../pages/Navbar";
 const Layout = ({ user, children, token, onLogout, setUser  }) => {
   const location = useLocation();
 
-const backendURL = "https://collabforge-server.onrender.com";
+const backendURL = import.meta.env.VITE_API_BASE_URL;
 
 const profilePhotoUrl = user?.profile_photo
   ? `${backendURL}${user.profile_photo}`

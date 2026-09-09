@@ -30,7 +30,7 @@ function App() {
     const fetchUser = async () => {
       if (token) {
         try {
-          const userRes = await fetch("https://collabforge-server.onrender.com/api/user/me", {
+          const userRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/me`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (userRes.ok) {

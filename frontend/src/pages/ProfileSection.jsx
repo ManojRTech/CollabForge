@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://collabforge-server.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 const ProfileSection = () => {

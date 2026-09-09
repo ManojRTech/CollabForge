@@ -120,7 +120,7 @@ const allowedOrigins = [
 
 // Enable CORS for Express APIs
 app.use(cors({
-  origin: ["https://collab-forge.vercel.app"],
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true,
 }));
@@ -198,5 +198,4 @@ io.on("connection", (socket) => {
 // Start the server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Ready for frontend: https://collab-forge.vercel.app`);
 });
